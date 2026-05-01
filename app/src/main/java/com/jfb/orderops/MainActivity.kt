@@ -24,8 +24,6 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             OrderOpsTheme {
-
-                val sessionStorage = SessionStorage(applicationContext)
                 val authApi = RetrofitClient.createAuthApi(sessionStorage)
 
                 val repository = AuthRepositoryImpl(
@@ -45,6 +43,7 @@ class MainActivity : ComponentActivity() {
 
                 if (isLoggedIn) {
                     DashboardScreen(
+                        sessionStorage = sessionStorage,
                         onLogout = {
                             sessionStorage.clear()
                         }

@@ -60,4 +60,5 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:3.0.0")
     implementation("com.squareup.okhttp3:logging-interceptor:5.1.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.4")
+    implementation("androidx.navigation:navigation-compose:2.9.5")
 }
