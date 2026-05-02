@@ -14,7 +14,8 @@ import com.jfb.orderops.serviceTable.presentation.state.ServiceTablesUiState
 @Composable
 fun ServiceTablesScreen(
     uiState: ServiceTablesUiState,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    onTableClick: (Long) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -53,7 +54,10 @@ fun ServiceTablesScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(uiState.serviceTables) { serviceTable ->
-                ServiceTableCard(serviceTable = serviceTable)
+                ServiceTableCard(
+                    serviceTable = serviceTable,
+                    onClick = { onTableClick(serviceTable.id) }
+                )
             }
         }
     }
@@ -61,7 +65,8 @@ fun ServiceTablesScreen(
 
 @Composable
 private fun ServiceTableCard(
-    serviceTable: ServiceTable
+    serviceTable: ServiceTable,
+    onClick: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth()
@@ -78,6 +83,16 @@ private fun ServiceTableCard(
 
             Text("Capacidade: ${serviceTable.capacity}")
             Text("Status: ${serviceTable.status.toReadableText()}")
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Button(
+                onClick = onClick,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = serviceTable.status == ServiceTableStatus.AVAILABLE
+            ) {
+                Text("Criar pedido")
+            }
         }
     }
 }

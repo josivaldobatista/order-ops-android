@@ -6,6 +6,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import com.jfb.orderops.core.navigation.AppRoute
 import com.jfb.orderops.core.network.RetrofitClient
 import com.jfb.orderops.core.storage.SessionStorage
 import com.jfb.orderops.order.data.repository.OrderRepositoryImpl
@@ -27,6 +29,7 @@ import com.jfb.orderops.serviceTable.presentation.list.ServiceTablesViewModelFac
 @Composable
 fun DashboardScreen(
     sessionStorage: SessionStorage,
+    navController: NavController,
     onLogout: () -> Unit
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
@@ -71,10 +74,7 @@ fun DashboardScreen(
                 .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                text = "OrderOps",
-                style = MaterialTheme.typography.titleLarge
-            )
+            Text("OrderOps", style = MaterialTheme.typography.titleLarge)
 
             Button(onClick = onLogout) {
                 Text("Logout")
@@ -82,29 +82,26 @@ fun DashboardScreen(
         }
 
         TabRow(selectedTabIndex = selectedTab) {
-            Tab(
-                selected = selectedTab == 0,
-                onClick = { selectedTab = 0 },
-                text = { Text("Mesas") }
-            )
-
-            Tab(
-                selected = selectedTab == 1,
-                onClick = { selectedTab = 1 },
-                text = { Text("Pedidos") }
-            )
-
-            Tab(
-                selected = selectedTab == 2,
-                onClick = { selectedTab = 2 },
-                text = { Text("Produtos") }
-            )
+            Tab(selected = selectedTab == 0, onClick = { selectedTab = 0 }) {
+                Text("Mesas")
+            }
+            Tab(selected = selectedTab == 1, onClick = { selectedTab = 1 }) {
+                Text("Pedidos")
+            }
+            Tab(selected = selectedTab == 2, onClick = { selectedTab = 2 }) {
+                Text("Produtos")
+            }
         }
 
         when (selectedTab) {
             0 -> ServiceTablesScreen(
                 uiState = serviceTablesUiState,
-                onRefresh = serviceTablesViewModel::loadServiceTables
+                onRefresh = serviceTablesViewModel::loadServiceTables,
+                onTableClick = { tableId ->
+                    navController.navigate(
+                        AppRoute.CreateOrder.createRoute(tableId)
+                    )
+                }
             )
 
             1 -> OrdersScreen(
