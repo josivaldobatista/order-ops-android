@@ -5,6 +5,7 @@ import com.jfb.orderops.order.data.dto.OrderResponse
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface OrderApi {
@@ -17,5 +18,10 @@ interface OrderApi {
     @POST("api/v1/orders")
     suspend fun create(
         @Body request: CreateOrderRequest
+    ): OrderResponse
+
+    @GET("api/v1/orders/{id}")
+    suspend fun getById(
+        @Path("id") id: Long
     ): OrderResponse
 }

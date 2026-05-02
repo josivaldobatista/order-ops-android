@@ -13,4 +13,6 @@ interface OrderRepository {
         serviceTableId: Long,
         items: List<CreateOrderItem>
     ): AppResult<Order>
+
+    suspend fun getById(id: Long): AppResult<Order>
 }

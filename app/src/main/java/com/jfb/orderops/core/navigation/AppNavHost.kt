@@ -1,6 +1,5 @@
 package com.jfb.orderops.core.navigation
 
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -20,12 +19,15 @@ import com.jfb.orderops.core.storage.SessionStorage
 import com.jfb.orderops.dashboard.presentation.DashboardScreen
 import com.jfb.orderops.order.data.repository.OrderRepositoryImpl
 import com.jfb.orderops.order.domain.usecase.CreateOrderUseCase
+import com.jfb.orderops.order.domain.usecase.GetOrderByIdUseCase
 import com.jfb.orderops.order.presentation.create.CreateOrderScreen
 import com.jfb.orderops.order.presentation.create.CreateOrderViewModel
 import com.jfb.orderops.order.presentation.create.CreateOrderViewModelFactory
+import com.jfb.orderops.order.presentation.detail.OrderDetailScreen
+import com.jfb.orderops.order.presentation.detail.OrderDetailViewModel
+import com.jfb.orderops.order.presentation.detail.OrderDetailViewModelFactory
 import com.jfb.orderops.product.data.repository.ProductRepositoryImpl
 import com.jfb.orderops.product.domain.usecase.ListProductsUseCase
-import androidx.compose.runtime.LaunchedEffect
 
 @Composable
 fun AppNavHost(
@@ -162,7 +164,30 @@ fun AppNavHost(
                 ?.getLong("orderId")
                 ?: return@composable
 
-            Text("Pedido ID: $orderId")
+            val orderApi = RetrofitClient.createOrderApi(sessionStorage)
+            val orderRepository = OrderRepositoryImpl(orderApi)
+            val getOrderByIdUseCase = GetOrderByIdUseCase(orderRepository)
+
+            val orderDetailViewModel: OrderDetailViewModel = viewModel(
+                factory = OrderDetailViewModelFactory(
+                    orderId = orderId,
+                    getOrderByIdUseCase = getOrderByIdUseCase
+                )
+            )
+
+            val uiState = orderDetailViewModel.uiState.collectAsState().value
+
+            LaunchedEffect(orderId) {
+                orderDetailViewModel.loadOrder()
+            }
+
+            OrderDetailScreen(
+                uiState = uiState,
+                onRefresh = orderDetailViewModel::loadOrder,
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
         }
     }
 }

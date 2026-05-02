@@ -60,4 +60,17 @@ class OrderRepositoryImpl(
             )
         }
     }
+
+    override suspend fun getById(id: Long): AppResult<Order> {
+        return try {
+            val order = api.getById(id).toDomain()
+
+            AppResult.Success(order)
+        } catch (e: Exception) {
+            AppResult.Error(
+                message = e.message ?: "Erro ao carregar pedido.",
+                throwable = e
+            )
+        }
+    }
 }
