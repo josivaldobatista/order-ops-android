@@ -3,12 +3,13 @@ package com.jfb.orderops.core.network
 import com.jfb.orderops.auth.data.remote.AuthApi
 import com.jfb.orderops.core.storage.SessionStorage
 import com.jfb.orderops.order.data.remote.OrderApi
+import com.jfb.orderops.payment.data.remote.PaymentApi
+import com.jfb.orderops.product.data.remote.ProductApi
 import com.jfb.orderops.serviceTable.data.remote.ServiceTableApi
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import com.jfb.orderops.product.data.remote.ProductApi
 
 object RetrofitClient {
 
@@ -97,4 +98,26 @@ object RetrofitClient {
 
         return retrofit.create(ProductApi::class.java)
     }
+
+    fun createPaymentApi(sessionStorage: SessionStorage): PaymentApi {
+        val loggingInterceptor = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        }
+
+        val authInterceptor = AuthInterceptor(sessionStorage)
+
+        val okHttpClient = OkHttpClient.Builder()
+            .addInterceptor(loggingInterceptor)
+            .addInterceptor(authInterceptor)
+            .build()
+
+        val retrofit = Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        return retrofit.create(PaymentApi::class.java)
+    }
+
 }

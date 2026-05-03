@@ -13,6 +13,12 @@ sealed class AppRoute(
         }
     }
 
+    data object Payment : AppRoute("payment/{orderId}/{amount}") {
+        fun createRoute(orderId: Long, amount: Double): String {
+            return "payment/$orderId/$amount"
+        }
+    }
+
     data object OrderDetail : AppRoute("order-detail/{orderId}") {
         fun createRoute(orderId: Long): String {
             return "order-detail/$orderId"

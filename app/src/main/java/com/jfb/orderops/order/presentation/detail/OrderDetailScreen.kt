@@ -47,6 +47,7 @@ fun OrderDetailScreen(
     onSendToPreparation: () -> Unit,
     onMarkAsReady: () -> Unit,
     onFinish: () -> Unit,
+    onGoToPayment: (Long, Double) -> Unit,
     onCancel: () -> Unit,
     onAddItem: (Long, Int) -> Unit,
     onRemoveItem: (Long) -> Unit,
@@ -111,6 +112,7 @@ fun OrderDetailScreen(
                     onSendToPreparation = onSendToPreparation,
                     onMarkAsReady = onMarkAsReady,
                     onFinish = onFinish,
+                    onGoToPayment = onGoToPayment,
                     onCancel = onCancel,
                     onAddItem = onAddItem,
                     onRemoveItem = onRemoveItem
@@ -128,6 +130,7 @@ private fun OrderDetailContent(
     onSendToPreparation: () -> Unit,
     onMarkAsReady: () -> Unit,
     onFinish: () -> Unit,
+    onGoToPayment: (Long, Double) -> Unit,
     onCancel: () -> Unit,
     onAddItem: (Long, Int) -> Unit,
     onRemoveItem: (Long) -> Unit
@@ -161,7 +164,9 @@ private fun OrderDetailContent(
         isLoading = isLoading,
         onSendToPreparation = onSendToPreparation,
         onMarkAsReady = onMarkAsReady,
-        onFinish = onFinish,
+        onFinish = {
+            onGoToPayment(order.id, order.totalAmount)
+        },
         onCancel = onCancel
     )
 
@@ -385,7 +390,7 @@ private fun OrderStatusActions(
                     enabled = !isLoading,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Finalizar pedido")
+                    Text("Pagar pedido")
                 }
 
                 OutlinedButton(

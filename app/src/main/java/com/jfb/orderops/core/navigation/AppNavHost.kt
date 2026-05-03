@@ -32,6 +32,11 @@ import com.jfb.orderops.order.presentation.create.CreateOrderViewModelFactory
 import com.jfb.orderops.order.presentation.detail.OrderDetailScreen
 import com.jfb.orderops.order.presentation.detail.OrderDetailViewModel
 import com.jfb.orderops.order.presentation.detail.OrderDetailViewModelFactory
+import com.jfb.orderops.payment.data.repository.PaymentRepositoryImpl
+import com.jfb.orderops.payment.domain.usecase.PayOrderUseCase
+import com.jfb.orderops.payment.presentation.pay.PaymentScreen
+import com.jfb.orderops.payment.presentation.pay.PaymentViewModel
+import com.jfb.orderops.payment.presentation.pay.PaymentViewModelFactory
 import com.jfb.orderops.product.data.repository.ProductRepositoryImpl
 import com.jfb.orderops.product.domain.usecase.ListProductsUseCase
 
@@ -80,6 +85,48 @@ fun AppNavHost(
                     }
                 }
             }
+        }
+
+        composable(
+            route = AppRoute.Payment.route,
+            arguments = listOf(
+                navArgument("orderId") { type = NavType.LongType },
+                navArgument("amount") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+
+            val orderId = backStackEntry.arguments?.getLong("orderId") ?: return@composable
+            val amount = backStackEntry.arguments
+                ?.getString("amount")
+                ?.toDoubleOrNull()
+                ?: 0.0
+
+            val paymentApi = RetrofitClient.createPaymentApi(sessionStorage)
+            val paymentRepository = PaymentRepositoryImpl(paymentApi)
+            val payOrderUseCase = PayOrderUseCase(paymentRepository)
+
+            val viewModel: PaymentViewModel = viewModel(
+                factory = PaymentViewModelFactory(
+                    orderId = orderId,
+                    amount = amount,
+                    payOrderUseCase = payOrderUseCase
+                )
+            )
+
+            val uiState = viewModel.uiState.collectAsState().value
+
+            PaymentScreen(
+                uiState = uiState,
+                onMethodSelected = viewModel::onMethodSelected,
+                onPayClick = {
+                    viewModel.pay {
+                        navController.popBackStack()
+                    }
+                },
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
         }
 
         composable(AppRoute.Dashboard.route) {
@@ -216,6 +263,11 @@ fun AppNavHost(
                 events = orderDetailViewModel.events,
                 onFinish = orderDetailViewModel::finish,
                 onCancel = orderDetailViewModel::cancel,
+                onGoToPayment = { orderId, amount ->
+                    navController.navigate(
+                        AppRoute.Payment.createRoute(orderId, amount)
+                    )
+                },
                 onAddItem = { productId, qty ->
                     orderDetailViewModel.addItem(productId, qty)
                 },
