@@ -387,8 +387,6 @@ private fun OrderStatusActions(
             OrderStatus.READY -> {
                 Button(
                     onClick = onFinish,
-                    enabled = !isLoading,
-                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Pagar pedido")
                 }
