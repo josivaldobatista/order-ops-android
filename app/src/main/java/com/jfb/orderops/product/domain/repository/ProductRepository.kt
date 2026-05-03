@@ -5,4 +5,11 @@ import com.jfb.orderops.product.domain.model.Product
 
 interface ProductRepository {
     suspend fun list(): AppResult<List<Product>>
+
+    suspend fun create(
+        name: String,
+        description: String?,
+        price: Double
+    ): AppResult<Product>
+
 }

@@ -141,10 +141,25 @@ fun DashboardScreen(
                 }
             )
 
-            2 -> ProductsScreen(
-                uiState = productsUiState,
-                onRefresh = productsViewModel::loadProducts
-            )
+            2 -> Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Button(
+                    onClick = {
+                        navController.navigate(AppRoute.CreateProduct.route)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text("Novo produto")
+                }
+
+                ProductsScreen(
+                    uiState = productsUiState,
+                    onRefresh = productsViewModel::loadProducts
+                )
+            }
         }
     }
 }

@@ -40,6 +40,11 @@ import com.jfb.orderops.payment.presentation.pay.PaymentViewModelFactory
 import com.jfb.orderops.product.data.repository.ProductRepositoryImpl
 import com.jfb.orderops.product.domain.usecase.ListProductsUseCase
 
+import com.jfb.orderops.product.domain.usecase.CreateProductUseCase
+import com.jfb.orderops.product.presentation.create.CreateProductScreen
+import com.jfb.orderops.product.presentation.create.CreateProductViewModel
+import com.jfb.orderops.product.presentation.create.CreateProductViewModelFactory
+
 @Composable
 fun AppNavHost(
     navController: NavHostController,
@@ -145,6 +150,33 @@ fun AppNavHost(
                             inclusive = true
                         }
                     }
+                }
+            )
+        }
+
+        composable(AppRoute.CreateProduct.route) {
+            val productApi = RetrofitClient.createProductApi(sessionStorage)
+            val productRepository = ProductRepositoryImpl(productApi)
+            val createProductUseCase = CreateProductUseCase(productRepository)
+
+            val createProductViewModel: CreateProductViewModel = viewModel(
+                factory = CreateProductViewModelFactory(createProductUseCase)
+            )
+
+            val uiState = createProductViewModel.uiState.collectAsState().value
+
+            CreateProductScreen(
+                uiState = uiState,
+                onNameChange = createProductViewModel::onNameChange,
+                onDescriptionChange = createProductViewModel::onDescriptionChange,
+                onPriceChange = createProductViewModel::onPriceChange,
+                onCreate = {
+                    createProductViewModel.create {
+                        navController.popBackStack()
+                    }
+                },
+                onBack = {
+                    navController.popBackStack()
                 }
             )
         }
