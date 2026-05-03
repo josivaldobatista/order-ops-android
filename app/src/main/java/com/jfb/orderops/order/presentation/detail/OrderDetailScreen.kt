@@ -19,9 +19,13 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,56 +49,64 @@ fun OrderDetailScreen(
     onAddItem: (Long, Int) -> Unit,
     onRemoveItem: (Long) -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState())
-    ) {
-        Button(
-            onClick = onBack,
-            enabled = !uiState.isLoading
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(uiState.errorMessage) {
+        uiState.errorMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+        }
+    }
+
+    Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState())
         ) {
-            Text("Voltar")
-        }
-
-        Spacer(Modifier.height(16.dp))
-
-        if (uiState.isLoading) {
-            CircularProgressIndicator()
-            Spacer(Modifier.height(16.dp))
-        }
-
-        uiState.errorMessage?.let {
-            Text(
-                text = it,
-                color = MaterialTheme.colorScheme.error
-            )
-
-            Spacer(Modifier.height(16.dp))
-
             Button(
-                onClick = onRefresh,
+                onClick = onBack,
                 enabled = !uiState.isLoading
             ) {
-                Text("Tentar novamente")
+                Text("Voltar")
             }
 
             Spacer(Modifier.height(16.dp))
-        }
 
-        uiState.order?.let { order ->
-            OrderDetailContent(
-                order = order,
-                products = uiState.products,
-                isLoading = uiState.isLoading,
-                onSendToPreparation = onSendToPreparation,
-                onMarkAsReady = onMarkAsReady,
-                onFinish = onFinish,
-                onCancel = onCancel,
-                onAddItem = onAddItem,
-                onRemoveItem = onRemoveItem
-            )
+            if (uiState.isLoading) {
+                CircularProgressIndicator()
+                Spacer(Modifier.height(16.dp))
+            }
+
+            uiState.errorMessage?.let {
+                Button(
+                    onClick = onRefresh,
+                    enabled = !uiState.isLoading
+                ) {
+                    Text("Tentar novamente")
+                }
+
+                Spacer(Modifier.height(16.dp))
+            }
+
+            uiState.order?.let { order ->
+                OrderDetailContent(
+                    order = order,
+                    products = uiState.products,
+                    isLoading = uiState.isLoading,
+                    onSendToPreparation = onSendToPreparation,
+                    onMarkAsReady = onMarkAsReady,
+                    onFinish = onFinish,
+                    onCancel = onCancel,
+                    onAddItem = onAddItem,
+                    onRemoveItem = onRemoveItem
+                )
+            }
         }
     }
 }
