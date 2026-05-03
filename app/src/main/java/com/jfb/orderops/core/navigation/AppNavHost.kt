@@ -213,6 +213,7 @@ fun AppNavHost(
                 onBack = { navController.popBackStack() },
                 onSendToPreparation = orderDetailViewModel::sendToPreparation,
                 onMarkAsReady = orderDetailViewModel::markAsReady,
+                events = orderDetailViewModel.events,
                 onFinish = orderDetailViewModel::finish,
                 onCancel = orderDetailViewModel::cancel,
                 onAddItem = { productId, qty ->

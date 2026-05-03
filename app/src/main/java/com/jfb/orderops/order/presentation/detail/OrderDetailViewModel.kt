@@ -18,6 +18,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
 class OrderDetailViewModel(
     private val orderId: Long,
@@ -33,6 +35,8 @@ class OrderDetailViewModel(
 
     private val _uiState = MutableStateFlow(OrderDetailUiState())
     val uiState: StateFlow<OrderDetailUiState> = _uiState.asStateFlow()
+    private val _events = MutableSharedFlow<String>()
+    val events = _events.asSharedFlow()
 
     fun loadAll() {
         viewModelScope.launch {
@@ -175,6 +179,8 @@ class OrderDetailViewModel(
                             errorMessage = null
                         )
                     }
+
+                    _events.emit("Operação realizada com sucesso")
                 }
 
                 is AppResult.Error -> {

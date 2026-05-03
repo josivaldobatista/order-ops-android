@@ -36,6 +36,7 @@ import com.jfb.orderops.order.domain.model.Order
 import com.jfb.orderops.order.domain.model.OrderStatus
 import com.jfb.orderops.order.presentation.state.OrderDetailUiState
 import com.jfb.orderops.product.domain.model.Product
+import kotlinx.coroutines.flow.Flow
 
 @Composable
 fun OrderDetailScreen(
@@ -47,12 +48,19 @@ fun OrderDetailScreen(
     onFinish: () -> Unit,
     onCancel: () -> Unit,
     onAddItem: (Long, Int) -> Unit,
-    onRemoveItem: (Long) -> Unit
+    onRemoveItem: (Long) -> Unit,
+    events: Flow<String>
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(uiState.errorMessage) {
         uiState.errorMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        events.collect { message ->
             snackbarHostState.showSnackbar(message)
         }
     }
