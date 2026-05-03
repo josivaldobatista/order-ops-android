@@ -93,6 +93,13 @@ private fun ServiceTableCard(
             ) {
                 Text("Criar pedido")
             }
+
+            if (serviceTable.status != ServiceTableStatus.AVAILABLE) {
+                Text(
+                    text = "Mesa indisponível",
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
         }
     }
 }
