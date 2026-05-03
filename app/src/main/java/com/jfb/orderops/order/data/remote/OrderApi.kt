@@ -8,6 +8,8 @@ import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
+import com.jfb.orderops.order.data.dto.AddOrderItemRequest
+import retrofit2.http.DELETE
 
 interface OrderApi {
 
@@ -44,5 +46,17 @@ interface OrderApi {
     @PATCH("api/v1/orders/{id}/cancel")
     suspend fun cancel(
         @Path("id") id: Long
+    ): OrderResponse
+
+    @POST("api/v1/orders/{id}/items")
+    suspend fun addItem(
+        @Path("id") orderId: Long,
+        @Body request: AddOrderItemRequest
+    ): OrderResponse
+
+    @DELETE("api/v1/orders/{orderId}/items/{itemId}")
+    suspend fun removeItem(
+        @Path("orderId") orderId: Long,
+        @Path("itemId") itemId: Long
     ): OrderResponse
 }

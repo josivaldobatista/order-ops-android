@@ -23,4 +23,15 @@ interface OrderRepository {
     suspend fun finish(id: Long): AppResult<Order>
 
     suspend fun cancel(id: Long): AppResult<Order>
+
+    suspend fun addItem(
+        orderId: Long,
+        productId: Long,
+        quantity: Int
+    ): AppResult<Order>
+
+    suspend fun removeItem(
+        orderId: Long,
+        itemId: Long
+    ): AppResult<Order>
 }

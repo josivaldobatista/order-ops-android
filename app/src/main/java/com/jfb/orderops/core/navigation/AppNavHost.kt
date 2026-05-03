@@ -18,11 +18,13 @@ import com.jfb.orderops.core.network.RetrofitClient
 import com.jfb.orderops.core.storage.SessionStorage
 import com.jfb.orderops.dashboard.presentation.DashboardScreen
 import com.jfb.orderops.order.data.repository.OrderRepositoryImpl
+import com.jfb.orderops.order.domain.usecase.AddOrderItemUseCase
 import com.jfb.orderops.order.domain.usecase.CancelOrderUseCase
 import com.jfb.orderops.order.domain.usecase.CreateOrderUseCase
 import com.jfb.orderops.order.domain.usecase.FinishOrderUseCase
 import com.jfb.orderops.order.domain.usecase.GetOrderByIdUseCase
 import com.jfb.orderops.order.domain.usecase.MarkOrderAsReadyUseCase
+import com.jfb.orderops.order.domain.usecase.RemoveOrderItemUseCase
 import com.jfb.orderops.order.domain.usecase.SendOrderToPreparationUseCase
 import com.jfb.orderops.order.presentation.create.CreateOrderScreen
 import com.jfb.orderops.order.presentation.create.CreateOrderViewModel
@@ -171,11 +173,19 @@ fun AppNavHost(
             val orderApi = RetrofitClient.createOrderApi(sessionStorage)
             val orderRepository = OrderRepositoryImpl(orderApi)
 
+            val productApi = RetrofitClient.createProductApi(sessionStorage)
+            val productRepository = ProductRepositoryImpl(productApi)
+
             val getOrderByIdUseCase = GetOrderByIdUseCase(orderRepository)
             val sendToPreparationUseCase = SendOrderToPreparationUseCase(orderRepository)
             val markAsReadyUseCase = MarkOrderAsReadyUseCase(orderRepository)
             val finishOrderUseCase = FinishOrderUseCase(orderRepository)
             val cancelOrderUseCase = CancelOrderUseCase(orderRepository)
+
+            val addOrderItemUseCase = AddOrderItemUseCase(orderRepository)
+            val removeOrderItemUseCase = RemoveOrderItemUseCase(orderRepository)
+
+            val listProductsUseCase = ListProductsUseCase(productRepository)
 
             val orderDetailViewModel: OrderDetailViewModel = viewModel(
                 factory = OrderDetailViewModelFactory(
@@ -184,24 +194,33 @@ fun AppNavHost(
                     sendToPreparationUseCase = sendToPreparationUseCase,
                     markAsReadyUseCase = markAsReadyUseCase,
                     finishOrderUseCase = finishOrderUseCase,
-                    cancelOrderUseCase = cancelOrderUseCase
+                    cancelOrderUseCase = cancelOrderUseCase,
+                    addOrderItemUseCase = addOrderItemUseCase,
+                    removeOrderItemUseCase = removeOrderItemUseCase,
+                    listProductsUseCase = listProductsUseCase
                 )
             )
 
-            val orderDetailUiState = orderDetailViewModel.uiState.collectAsState().value
+            val uiState = orderDetailViewModel.uiState.collectAsState().value
 
             LaunchedEffect(orderId) {
-                orderDetailViewModel.loadOrder()
+                orderDetailViewModel.loadAll()
             }
 
             OrderDetailScreen(
-                uiState = orderDetailUiState,
-                onRefresh = orderDetailViewModel::loadOrder,
+                uiState = uiState,
+                onRefresh = orderDetailViewModel::loadAll,
                 onBack = { navController.popBackStack() },
                 onSendToPreparation = orderDetailViewModel::sendToPreparation,
                 onMarkAsReady = orderDetailViewModel::markAsReady,
                 onFinish = orderDetailViewModel::finish,
-                onCancel = orderDetailViewModel::cancel
+                onCancel = orderDetailViewModel::cancel,
+                onAddItem = { productId, qty ->
+                    orderDetailViewModel.addItem(productId, qty)
+                },
+                onRemoveItem = { itemId ->
+                    orderDetailViewModel.removeItem(itemId)
+                }
             )
         }
     }

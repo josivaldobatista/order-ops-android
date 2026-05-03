@@ -2,12 +2,13 @@ package com.jfb.orderops.order.presentation.detail
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.jfb.orderops.order.domain.model.Order
 import com.jfb.orderops.order.domain.model.OrderStatus
 import com.jfb.orderops.order.presentation.state.OrderDetailUiState
+import com.jfb.orderops.product.domain.model.Product
 
 @Composable
 fun OrderDetailScreen(
@@ -17,7 +18,9 @@ fun OrderDetailScreen(
     onSendToPreparation: () -> Unit,
     onMarkAsReady: () -> Unit,
     onFinish: () -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    onAddItem: (Long, Int) -> Unit,
+    onRemoveItem: (Long) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -50,10 +53,13 @@ fun OrderDetailScreen(
         uiState.order?.let { order ->
             OrderDetailContent(
                 order = order,
+                products = uiState.products,
                 onSendToPreparation = onSendToPreparation,
                 onMarkAsReady = onMarkAsReady,
                 onFinish = onFinish,
-                onCancel = onCancel
+                onCancel = onCancel,
+                onAddItem = onAddItem,
+                onRemoveItem = onRemoveItem
             )
         }
     }
@@ -62,10 +68,13 @@ fun OrderDetailScreen(
 @Composable
 private fun OrderDetailContent(
     order: Order,
+    products: List<Product>,
     onSendToPreparation: () -> Unit,
     onMarkAsReady: () -> Unit,
     onFinish: () -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    onAddItem: (Long, Int) -> Unit,
+    onRemoveItem: (Long) -> Unit
 ) {
     Text(
         text = "Pedido #${order.id}",
@@ -96,6 +105,15 @@ private fun OrderDetailContent(
         onCancel = onCancel
     )
 
+    if (order.status == OrderStatus.OPEN) {
+        Spacer(Modifier.height(24.dp))
+
+        AddItemSection(
+            products = products,
+            onAddItem = onAddItem
+        )
+    }
+
     Spacer(Modifier.height(24.dp))
 
     Text(
@@ -114,19 +132,130 @@ private fun OrderDetailContent(
                     .fillMaxWidth()
                     .padding(vertical = 4.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(12.dp)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(
-                        text = item.productName,
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    Text("Quantidade: ${item.quantity}")
-                    Text("Unitário: R$ ${"%.2f".format(item.unitPrice)}")
-                    Text("Subtotal: R$ ${"%.2f".format(item.totalPrice)}")
+                    Column {
+                        Text(
+                            text = item.productName,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text("Quantidade: ${item.quantity}")
+                        Text("Unitário: R$ ${"%.2f".format(item.unitPrice)}")
+                        Text("Subtotal: R$ ${"%.2f".format(item.totalPrice)}")
+                    }
+
+                    if (order.status == OrderStatus.OPEN) {
+                        TextButton(
+                            onClick = { onRemoveItem(item.id) }
+                        ) {
+                            Text("Remover")
+                        }
+                    }
                 }
             }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddItemSection(
+    products: List<Product>,
+    onAddItem: (Long, Int) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    var selectedProductId by remember(products) {
+        mutableStateOf(products.firstOrNull()?.id)
+    }
+    var quantity by remember { mutableStateOf(1) }
+
+    val selectedProduct = products.firstOrNull {
+        it.id == selectedProductId
+    }
+
+    Text(
+        text = "Adicionar item",
+        style = MaterialTheme.typography.titleMedium
+    )
+
+    Spacer(Modifier.height(8.dp))
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
+        OutlinedTextField(
+            value = selectedProduct?.name ?: "Selecione um produto",
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Produto") },
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth()
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            products.forEach { product ->
+                DropdownMenuItem(
+                    text = {
+                        Text("${product.name} - R$ ${"%.2f".format(product.price)}")
+                    },
+                    onClick = {
+                        selectedProductId = product.id
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+
+    Spacer(Modifier.height(12.dp))
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Button(
+            onClick = {
+                quantity = maxOf(1, quantity - 1)
+            }
+        ) {
+            Text("-")
+        }
+
+        Text(
+            text = quantity.toString(),
+            style = MaterialTheme.typography.titleLarge
+        )
+
+        Button(
+            onClick = {
+                quantity++
+            }
+        ) {
+            Text("+")
+        }
+    }
+
+    Spacer(Modifier.height(12.dp))
+
+    Button(
+        onClick = {
+            selectedProductId?.let { productId ->
+                onAddItem(productId, quantity)
+                quantity = 1
+            }
+        },
+        enabled = selectedProductId != null,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text("Adicionar item")
     }
 }
 

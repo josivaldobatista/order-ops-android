@@ -1,6 +1,7 @@
 package com.jfb.orderops.order.data.repository
 
 import com.jfb.orderops.core.result.AppResult
+import com.jfb.orderops.order.data.dto.AddOrderItemRequest
 import com.jfb.orderops.order.data.dto.CreateOrderItemRequest
 import com.jfb.orderops.order.data.dto.CreateOrderRequest
 import com.jfb.orderops.order.data.dto.toDomain
@@ -106,6 +107,48 @@ class OrderRepositoryImpl(
         } catch (e: Exception) {
             AppResult.Error(
                 message = e.message ?: "Erro ao atualizar status do pedido.",
+                throwable = e
+            )
+        }
+    }
+
+    override suspend fun addItem(
+        orderId: Long,
+        productId: Long,
+        quantity: Int
+    ): AppResult<Order> {
+        return try {
+            val order = api.addItem(
+                orderId = orderId,
+                request = AddOrderItemRequest(
+                    productId = productId,
+                    quantity = quantity
+                )
+            ).toDomain()
+
+            AppResult.Success(order)
+        } catch (e: Exception) {
+            AppResult.Error(
+                message = e.message ?: "Erro ao adicionar item.",
+                throwable = e
+            )
+        }
+    }
+
+    override suspend fun removeItem(
+        orderId: Long,
+        itemId: Long
+    ): AppResult<Order> {
+        return try {
+            val order = api.removeItem(
+                orderId = orderId,
+                itemId = itemId
+            ).toDomain()
+
+            AppResult.Success(order)
+        } catch (e: Exception) {
+            AppResult.Error(
+                message = e.message ?: "Erro ao remover item.",
                 throwable = e
             )
         }
