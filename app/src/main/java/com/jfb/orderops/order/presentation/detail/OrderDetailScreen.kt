@@ -51,7 +51,10 @@ fun OrderDetailScreen(
             .padding(16.dp)
             .verticalScroll(rememberScrollState())
     ) {
-        Button(onClick = onBack) {
+        Button(
+            onClick = onBack,
+            enabled = !uiState.isLoading
+        ) {
             Text("Voltar")
         }
 
@@ -59,6 +62,7 @@ fun OrderDetailScreen(
 
         if (uiState.isLoading) {
             CircularProgressIndicator()
+            Spacer(Modifier.height(16.dp))
         }
 
         uiState.errorMessage?.let {
@@ -69,15 +73,21 @@ fun OrderDetailScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            Button(onClick = onRefresh) {
+            Button(
+                onClick = onRefresh,
+                enabled = !uiState.isLoading
+            ) {
                 Text("Tentar novamente")
             }
+
+            Spacer(Modifier.height(16.dp))
         }
 
         uiState.order?.let { order ->
             OrderDetailContent(
                 order = order,
                 products = uiState.products,
+                isLoading = uiState.isLoading,
                 onSendToPreparation = onSendToPreparation,
                 onMarkAsReady = onMarkAsReady,
                 onFinish = onFinish,
@@ -93,6 +103,7 @@ fun OrderDetailScreen(
 private fun OrderDetailContent(
     order: Order,
     products: List<Product>,
+    isLoading: Boolean,
     onSendToPreparation: () -> Unit,
     onMarkAsReady: () -> Unit,
     onFinish: () -> Unit,
@@ -123,6 +134,7 @@ private fun OrderDetailContent(
 
     OrderStatusActions(
         status = order.status,
+        isLoading = isLoading,
         onSendToPreparation = onSendToPreparation,
         onMarkAsReady = onMarkAsReady,
         onFinish = onFinish,
@@ -134,6 +146,7 @@ private fun OrderDetailContent(
 
         AddItemSection(
             products = products,
+            isLoading = isLoading,
             onAddItem = onAddItem
         )
     }
@@ -174,7 +187,8 @@ private fun OrderDetailContent(
 
                     if (order.status == OrderStatus.OPEN) {
                         TextButton(
-                            onClick = { onRemoveItem(item.id) }
+                            onClick = { onRemoveItem(item.id) },
+                            enabled = !isLoading
                         ) {
                             Text("Remover")
                         }
@@ -189,6 +203,7 @@ private fun OrderDetailContent(
 @Composable
 private fun AddItemSection(
     products: List<Product>,
+    isLoading: Boolean,
     onAddItem: (Long, Int) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -210,12 +225,17 @@ private fun AddItemSection(
 
     ExposedDropdownMenuBox(
         expanded = expanded,
-        onExpandedChange = { expanded = !expanded }
+        onExpandedChange = {
+            if (!isLoading) {
+                expanded = !expanded
+            }
+        }
     ) {
         OutlinedTextField(
             value = selectedProduct?.name ?: "Selecione um produto",
             onValueChange = {},
             readOnly = true,
+            enabled = !isLoading,
             label = { Text("Produto") },
             modifier = Modifier
                 .menuAnchor()
@@ -234,7 +254,8 @@ private fun AddItemSection(
                     onClick = {
                         selectedProductId = product.id
                         expanded = false
-                    }
+                    },
+                    enabled = !isLoading
                 )
             }
         }
@@ -248,7 +269,8 @@ private fun AddItemSection(
         Button(
             onClick = {
                 quantity = maxOf(1, quantity - 1)
-            }
+            },
+            enabled = !isLoading
         ) {
             Text("-")
         }
@@ -261,7 +283,8 @@ private fun AddItemSection(
         Button(
             onClick = {
                 quantity++
-            }
+            },
+            enabled = !isLoading
         ) {
             Text("+")
         }
@@ -276,7 +299,7 @@ private fun AddItemSection(
                 quantity = 1
             }
         },
-        enabled = selectedProductId != null,
+        enabled = selectedProductId != null && !isLoading,
         modifier = Modifier.fillMaxWidth()
     ) {
         Text("Adicionar item")
@@ -286,6 +309,7 @@ private fun AddItemSection(
 @Composable
 private fun OrderStatusActions(
     status: OrderStatus,
+    isLoading: Boolean,
     onSendToPreparation: () -> Unit,
     onMarkAsReady: () -> Unit,
     onFinish: () -> Unit,
@@ -298,6 +322,7 @@ private fun OrderStatusActions(
             OrderStatus.OPEN -> {
                 Button(
                     onClick = onSendToPreparation,
+                    enabled = !isLoading,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Enviar para preparo")
@@ -305,6 +330,7 @@ private fun OrderStatusActions(
 
                 OutlinedButton(
                     onClick = onCancel,
+                    enabled = !isLoading,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Cancelar pedido")
@@ -314,6 +340,7 @@ private fun OrderStatusActions(
             OrderStatus.IN_PREPARATION -> {
                 Button(
                     onClick = onMarkAsReady,
+                    enabled = !isLoading,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Marcar como pronto")
@@ -321,6 +348,7 @@ private fun OrderStatusActions(
 
                 OutlinedButton(
                     onClick = onCancel,
+                    enabled = !isLoading,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Cancelar pedido")
@@ -330,6 +358,7 @@ private fun OrderStatusActions(
             OrderStatus.READY -> {
                 Button(
                     onClick = onFinish,
+                    enabled = !isLoading,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Finalizar pedido")
@@ -337,6 +366,7 @@ private fun OrderStatusActions(
 
                 OutlinedButton(
                     onClick = onCancel,
+                    enabled = !isLoading,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Cancelar pedido")

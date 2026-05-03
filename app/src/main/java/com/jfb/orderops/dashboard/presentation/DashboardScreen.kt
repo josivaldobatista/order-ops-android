@@ -1,10 +1,28 @@
 package com.jfb.orderops.dashboard.presentation
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.jfb.orderops.core.navigation.AppRoute
@@ -61,10 +79,14 @@ fun DashboardScreen(
     )
     val productsUiState = productsViewModel.uiState.collectAsState().value
 
-    LaunchedEffect(Unit) {
-        serviceTablesViewModel.loadServiceTables()
-        ordersViewModel.loadOrders()
-        productsViewModel.loadProducts()
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            serviceTablesViewModel.loadServiceTables()
+            ordersViewModel.loadOrders()
+            productsViewModel.loadProducts()
+        }
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -85,9 +107,11 @@ fun DashboardScreen(
             Tab(selected = selectedTab == 0, onClick = { selectedTab = 0 }) {
                 Text("Mesas")
             }
+
             Tab(selected = selectedTab == 1, onClick = { selectedTab = 1 }) {
                 Text("Pedidos")
             }
+
             Tab(selected = selectedTab == 2, onClick = { selectedTab = 2 }) {
                 Text("Produtos")
             }
