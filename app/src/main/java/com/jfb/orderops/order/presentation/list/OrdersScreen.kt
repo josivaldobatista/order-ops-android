@@ -15,7 +15,8 @@ import com.jfb.orderops.order.presentation.state.OrdersUiState
 fun OrdersScreen(
     uiState: OrdersUiState,
     onRefresh: () -> Unit,
-    onStatusSelected: (OrderStatus?) -> Unit
+    onStatusSelected: (OrderStatus?) -> Unit,
+    onOrderClick: (Long) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -61,7 +62,10 @@ fun OrdersScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(uiState.orders) { order ->
-                OrderCard(order = order)
+                OrderCard(
+                    order = order,
+                    onClick = { onOrderClick(order.id) }
+                )
             }
         }
     }
@@ -107,10 +111,12 @@ private fun OrderStatusFilters(
 
 @Composable
 private fun OrderCard(
-    order: Order
+    order: Order,
+    onClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onClick
     ) {
         Column(
             modifier = Modifier.padding(16.dp)

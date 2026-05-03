@@ -109,6 +109,11 @@ fun DashboardScreen(
                 onRefresh = { ordersViewModel.loadOrders() },
                 onStatusSelected = { status ->
                     ordersViewModel.loadOrders(status)
+                },
+                onOrderClick = { orderId ->
+                    navController.navigate(
+                        AppRoute.OrderDetail.createRoute(orderId)
+                    )
                 }
             )
 
