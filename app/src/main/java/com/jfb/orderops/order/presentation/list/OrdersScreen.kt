@@ -28,24 +28,24 @@ fun OrdersScreen(
             style = MaterialTheme.typography.headlineMedium
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(Modifier.height(16.dp))
 
-        OrderStatusFilters(
+        StatusFilter(
             selectedStatus = uiState.selectedStatus,
             onStatusSelected = onStatusSelected
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(Modifier.height(16.dp))
 
         Button(
             onClick = onRefresh,
             enabled = !uiState.isLoading,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Atualizar pedidos")
+            Text("Atualizar")
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(Modifier.height(16.dp))
 
         if (uiState.isLoading) {
             CircularProgressIndicator()
@@ -72,28 +72,28 @@ fun OrdersScreen(
 }
 
 @Composable
-private fun OrderStatusFilters(
+private fun StatusFilter(
     selectedStatus: OrderStatus?,
     onStatusSelected: (OrderStatus?) -> Unit
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        FilterChip(
-            selected = selectedStatus == null,
-            onClick = { onStatusSelected(null) },
-            label = { Text("Todos") }
-        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(
+                selected = selectedStatus == null,
+                onClick = { onStatusSelected(null) },
+                label = { Text("Todos") }
+            )
 
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
             FilterChip(
                 selected = selectedStatus == OrderStatus.OPEN,
                 onClick = { onStatusSelected(OrderStatus.OPEN) },
                 label = { Text("Abertos") }
             )
+        }
 
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilterChip(
                 selected = selectedStatus == OrderStatus.IN_PREPARATION,
                 onClick = { onStatusSelected(OrderStatus.IN_PREPARATION) },
@@ -104,6 +104,12 @@ private fun OrderStatusFilters(
                 selected = selectedStatus == OrderStatus.READY,
                 onClick = { onStatusSelected(OrderStatus.READY) },
                 label = { Text("Prontos") }
+            )
+
+            FilterChip(
+                selected = selectedStatus == OrderStatus.FINISHED,
+                onClick = { onStatusSelected(OrderStatus.FINISHED) },
+                label = { Text("Finalizados") }
             )
         }
     }
@@ -126,14 +132,14 @@ private fun OrderCard(
                 style = MaterialTheme.typography.titleMedium
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(Modifier.height(8.dp))
 
             Text("Mesa: ${order.serviceTableId}")
             Text("Status: ${order.status.toReadableText()}")
             Text("Total: R$ ${"%.2f".format(order.totalAmount)}")
 
             if (order.items.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(Modifier.height(8.dp))
 
                 Text(
                     text = "Itens:",
