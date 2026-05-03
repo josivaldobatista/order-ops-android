@@ -180,6 +180,9 @@ class OrderDetailViewModel(
                         )
                     }
 
+                    // força reload do pedido (garante consistência)
+                    loadOrder()
+
                     _events.emit("Operação realizada com sucesso")
                 }
 

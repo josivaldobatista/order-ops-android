@@ -86,17 +86,22 @@ private fun ServiceTableCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            val canCreateOrder = serviceTable.status == ServiceTableStatus.AVAILABLE ||
+                    serviceTable.status == ServiceTableStatus.RESERVED
+
             Button(
                 onClick = onClick,
                 modifier = Modifier.fillMaxWidth(),
-                enabled = serviceTable.status == ServiceTableStatus.AVAILABLE
+                enabled = canCreateOrder
             ) {
                 Text("Criar pedido")
             }
 
-            if (serviceTable.status != ServiceTableStatus.AVAILABLE) {
+            if (!canCreateOrder) {
+                Spacer(modifier = Modifier.height(8.dp))
+
                 Text(
-                    text = "Mesa indisponível",
+                    text = "Mesa indisponível para pedido",
                     color = MaterialTheme.colorScheme.error
                 )
             }
