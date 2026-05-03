@@ -4,6 +4,7 @@ import com.jfb.orderops.order.data.dto.CreateOrderRequest
 import com.jfb.orderops.order.data.dto.OrderResponse
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -22,6 +23,26 @@ interface OrderApi {
 
     @GET("api/v1/orders/{id}")
     suspend fun getById(
+        @Path("id") id: Long
+    ): OrderResponse
+
+    @PATCH("api/v1/orders/{id}/send-to-preparation")
+    suspend fun sendToPreparation(
+        @Path("id") id: Long
+    ): OrderResponse
+
+    @PATCH("api/v1/orders/{id}/ready")
+    suspend fun markAsReady(
+        @Path("id") id: Long
+    ): OrderResponse
+
+    @PATCH("api/v1/orders/{id}/finish")
+    suspend fun finish(
+        @Path("id") id: Long
+    ): OrderResponse
+
+    @PATCH("api/v1/orders/{id}/cancel")
+    suspend fun cancel(
         @Path("id") id: Long
     ): OrderResponse
 }

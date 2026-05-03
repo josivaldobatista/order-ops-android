@@ -15,4 +15,12 @@ interface OrderRepository {
     ): AppResult<Order>
 
     suspend fun getById(id: Long): AppResult<Order>
+
+    suspend fun sendToPreparation(id: Long): AppResult<Order>
+
+    suspend fun markAsReady(id: Long): AppResult<Order>
+
+    suspend fun finish(id: Long): AppResult<Order>
+
+    suspend fun cancel(id: Long): AppResult<Order>
 }

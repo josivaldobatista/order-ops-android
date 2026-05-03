@@ -13,7 +13,11 @@ import com.jfb.orderops.order.presentation.state.OrderDetailUiState
 fun OrderDetailScreen(
     uiState: OrderDetailUiState,
     onRefresh: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onSendToPreparation: () -> Unit,
+    onMarkAsReady: () -> Unit,
+    onFinish: () -> Unit,
+    onCancel: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -44,14 +48,24 @@ fun OrderDetailScreen(
         }
 
         uiState.order?.let { order ->
-            OrderDetailContent(order = order)
+            OrderDetailContent(
+                order = order,
+                onSendToPreparation = onSendToPreparation,
+                onMarkAsReady = onMarkAsReady,
+                onFinish = onFinish,
+                onCancel = onCancel
+            )
         }
     }
 }
 
 @Composable
 private fun OrderDetailContent(
-    order: Order
+    order: Order,
+    onSendToPreparation: () -> Unit,
+    onMarkAsReady: () -> Unit,
+    onFinish: () -> Unit,
+    onCancel: () -> Unit
 ) {
     Text(
         text = "Pedido #${order.id}",
@@ -71,6 +85,16 @@ private fun OrderDetailContent(
             Text("Total: R$ ${"%.2f".format(order.totalAmount)}")
         }
     }
+
+    Spacer(Modifier.height(16.dp))
+
+    OrderStatusActions(
+        status = order.status,
+        onSendToPreparation = onSendToPreparation,
+        onMarkAsReady = onMarkAsReady,
+        onFinish = onFinish,
+        onCancel = onCancel
+    )
 
     Spacer(Modifier.height(24.dp))
 
@@ -101,6 +125,81 @@ private fun OrderDetailContent(
                     Text("Unitário: R$ ${"%.2f".format(item.unitPrice)}")
                     Text("Subtotal: R$ ${"%.2f".format(item.totalPrice)}")
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun OrderStatusActions(
+    status: OrderStatus,
+    onSendToPreparation: () -> Unit,
+    onMarkAsReady: () -> Unit,
+    onFinish: () -> Unit,
+    onCancel: () -> Unit
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        when (status) {
+            OrderStatus.OPEN -> {
+                Button(
+                    onClick = onSendToPreparation,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Enviar para preparo")
+                }
+
+                OutlinedButton(
+                    onClick = onCancel,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Cancelar pedido")
+                }
+            }
+
+            OrderStatus.IN_PREPARATION -> {
+                Button(
+                    onClick = onMarkAsReady,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Marcar como pronto")
+                }
+
+                OutlinedButton(
+                    onClick = onCancel,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Cancelar pedido")
+                }
+            }
+
+            OrderStatus.READY -> {
+                Button(
+                    onClick = onFinish,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Finalizar pedido")
+                }
+
+                OutlinedButton(
+                    onClick = onCancel,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Cancelar pedido")
+                }
+            }
+
+            OrderStatus.FINISHED -> {
+                Text("Pedido finalizado.")
+            }
+
+            OrderStatus.CANCELLED -> {
+                Text("Pedido cancelado.")
+            }
+
+            OrderStatus.UNKNOWN -> {
+                Text("Status desconhecido.")
             }
         }
     }

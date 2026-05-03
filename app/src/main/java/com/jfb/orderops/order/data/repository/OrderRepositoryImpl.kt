@@ -73,4 +73,41 @@ class OrderRepositoryImpl(
             )
         }
     }
+
+    override suspend fun sendToPreparation(id: Long): AppResult<Order> {
+        return updateStatus {
+            api.sendToPreparation(id).toDomain()
+        }
+    }
+
+    override suspend fun markAsReady(id: Long): AppResult<Order> {
+        return updateStatus {
+            api.markAsReady(id).toDomain()
+        }
+    }
+
+    override suspend fun finish(id: Long): AppResult<Order> {
+        return updateStatus {
+            api.finish(id).toDomain()
+        }
+    }
+
+    override suspend fun cancel(id: Long): AppResult<Order> {
+        return updateStatus {
+            api.cancel(id).toDomain()
+        }
+    }
+
+    private suspend fun updateStatus(
+        action: suspend () -> Order
+    ): AppResult<Order> {
+        return try {
+            AppResult.Success(action())
+        } catch (e: Exception) {
+            AppResult.Error(
+                message = e.message ?: "Erro ao atualizar status do pedido.",
+                throwable = e
+            )
+        }
+    }
 }

@@ -18,8 +18,12 @@ import com.jfb.orderops.core.network.RetrofitClient
 import com.jfb.orderops.core.storage.SessionStorage
 import com.jfb.orderops.dashboard.presentation.DashboardScreen
 import com.jfb.orderops.order.data.repository.OrderRepositoryImpl
+import com.jfb.orderops.order.domain.usecase.CancelOrderUseCase
 import com.jfb.orderops.order.domain.usecase.CreateOrderUseCase
+import com.jfb.orderops.order.domain.usecase.FinishOrderUseCase
 import com.jfb.orderops.order.domain.usecase.GetOrderByIdUseCase
+import com.jfb.orderops.order.domain.usecase.MarkOrderAsReadyUseCase
+import com.jfb.orderops.order.domain.usecase.SendOrderToPreparationUseCase
 import com.jfb.orderops.order.presentation.create.CreateOrderScreen
 import com.jfb.orderops.order.presentation.create.CreateOrderViewModel
 import com.jfb.orderops.order.presentation.create.CreateOrderViewModelFactory
@@ -36,18 +40,18 @@ fun AppNavHost(
 ) {
     val authApi = RetrofitClient.createAuthApi(sessionStorage)
 
-    val repository = AuthRepositoryImpl(
+    val authRepository = AuthRepositoryImpl(
         api = authApi,
         sessionStorage = sessionStorage
     )
 
-    val useCase = LoginUseCase(repository)
+    val loginUseCase = LoginUseCase(authRepository)
 
     val loginViewModel: LoginViewModel = viewModel(
-        factory = LoginViewModelFactory(useCase)
+        factory = LoginViewModelFactory(loginUseCase)
     )
 
-    val uiState = loginViewModel.uiState.collectAsState().value
+    val loginUiState = loginViewModel.uiState.collectAsState().value
 
     val startDestination = if (sessionStorage.isLoggedIn()) {
         AppRoute.Dashboard.route
@@ -59,6 +63,39 @@ fun AppNavHost(
         navController = navController,
         startDestination = startDestination
     ) {
+        composable(AppRoute.Login.route) {
+            LoginScreen(
+                uiState = loginUiState,
+                onEmailChange = loginViewModel::onEmailChange,
+                onPasswordChange = loginViewModel::onPasswordChange,
+                onLoginClick = loginViewModel::login
+            )
+
+            if (loginUiState.isLoggedIn) {
+                navController.navigate(AppRoute.Dashboard.route) {
+                    popUpTo(AppRoute.Login.route) {
+                        inclusive = true
+                    }
+                }
+            }
+        }
+
+        composable(AppRoute.Dashboard.route) {
+            DashboardScreen(
+                sessionStorage = sessionStorage,
+                navController = navController,
+                onLogout = {
+                    sessionStorage.clear()
+
+                    navController.navigate(AppRoute.Login.route) {
+                        popUpTo(AppRoute.Dashboard.route) {
+                            inclusive = true
+                        }
+                    }
+                }
+            )
+        }
+
         composable(
             route = AppRoute.CreateOrder.route,
             arguments = listOf(
@@ -87,14 +124,14 @@ fun AppNavHost(
                 )
             )
 
-            val uiState = createOrderViewModel.uiState.collectAsState().value
+            val createOrderUiState = createOrderViewModel.uiState.collectAsState().value
 
-            LaunchedEffect(Unit) {
+            LaunchedEffect(serviceTableId) {
                 createOrderViewModel.loadProducts()
             }
 
             CreateOrderScreen(
-                uiState = uiState,
+                uiState = createOrderUiState,
                 onProductSelected = createOrderViewModel::onProductSelected,
                 onIncreaseQuantity = createOrderViewModel::increaseQuantity,
                 onDecreaseQuantity = createOrderViewModel::decreaseQuantity,
@@ -119,39 +156,6 @@ fun AppNavHost(
             )
         }
 
-        composable(AppRoute.Login.route) {
-            LoginScreen(
-                uiState = uiState,
-                onEmailChange = loginViewModel::onEmailChange,
-                onPasswordChange = loginViewModel::onPasswordChange,
-                onLoginClick = loginViewModel::login
-            )
-
-            if (uiState.isLoggedIn) {
-                navController.navigate(AppRoute.Dashboard.route) {
-                    popUpTo(AppRoute.Login.route) {
-                        inclusive = true
-                    }
-                }
-            }
-        }
-
-        composable(AppRoute.Dashboard.route) {
-            DashboardScreen(
-                sessionStorage = sessionStorage,
-                navController = navController,
-                onLogout = {
-                    sessionStorage.clear()
-
-                    navController.navigate(AppRoute.Login.route) {
-                        popUpTo(AppRoute.Dashboard.route) {
-                            inclusive = true
-                        }
-                    }
-                }
-            )
-        }
-
         composable(
             route = AppRoute.OrderDetail.route,
             arguments = listOf(
@@ -166,27 +170,38 @@ fun AppNavHost(
 
             val orderApi = RetrofitClient.createOrderApi(sessionStorage)
             val orderRepository = OrderRepositoryImpl(orderApi)
+
             val getOrderByIdUseCase = GetOrderByIdUseCase(orderRepository)
+            val sendToPreparationUseCase = SendOrderToPreparationUseCase(orderRepository)
+            val markAsReadyUseCase = MarkOrderAsReadyUseCase(orderRepository)
+            val finishOrderUseCase = FinishOrderUseCase(orderRepository)
+            val cancelOrderUseCase = CancelOrderUseCase(orderRepository)
 
             val orderDetailViewModel: OrderDetailViewModel = viewModel(
                 factory = OrderDetailViewModelFactory(
                     orderId = orderId,
-                    getOrderByIdUseCase = getOrderByIdUseCase
+                    getOrderByIdUseCase = getOrderByIdUseCase,
+                    sendToPreparationUseCase = sendToPreparationUseCase,
+                    markAsReadyUseCase = markAsReadyUseCase,
+                    finishOrderUseCase = finishOrderUseCase,
+                    cancelOrderUseCase = cancelOrderUseCase
                 )
             )
 
-            val uiState = orderDetailViewModel.uiState.collectAsState().value
+            val orderDetailUiState = orderDetailViewModel.uiState.collectAsState().value
 
             LaunchedEffect(orderId) {
                 orderDetailViewModel.loadOrder()
             }
 
             OrderDetailScreen(
-                uiState = uiState,
+                uiState = orderDetailUiState,
                 onRefresh = orderDetailViewModel::loadOrder,
-                onBack = {
-                    navController.popBackStack()
-                }
+                onBack = { navController.popBackStack() },
+                onSendToPreparation = orderDetailViewModel::sendToPreparation,
+                onMarkAsReady = orderDetailViewModel::markAsReady,
+                onFinish = orderDetailViewModel::finish,
+                onCancel = orderDetailViewModel::cancel
             )
         }
     }
