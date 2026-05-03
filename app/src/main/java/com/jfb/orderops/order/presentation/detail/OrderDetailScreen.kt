@@ -31,6 +31,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.jfb.orderops.order.domain.model.Order
 import com.jfb.orderops.order.domain.model.OrderStatus
@@ -145,7 +146,10 @@ private fun OrderDetailContent(
             modifier = Modifier.padding(16.dp)
         ) {
             Text("Mesa: ${order.serviceTableId}")
-            Text("Status: ${order.status.toReadableText()}")
+            Text(
+                text = "Status: ${order.status.toReadableText()}",
+                color = order.status.toColor()
+            )
             Text("Total: R$ ${"%.2f".format(order.totalAmount)}")
         }
     }
@@ -405,6 +409,17 @@ private fun OrderStatusActions(
                 Text("Status desconhecido.")
             }
         }
+    }
+}
+
+private fun OrderStatus.toColor(): Color {
+    return when (this) {
+        OrderStatus.OPEN -> Color(0xFF4CAF50)          // verde
+        OrderStatus.IN_PREPARATION -> Color(0xFFFFC107) // amarelo
+        OrderStatus.READY -> Color(0xFF2196F3)         // azul
+        OrderStatus.FINISHED -> Color(0xFF9E9E9E)      // cinza
+        OrderStatus.CANCELLED -> Color(0xFFF44336)     // vermelho
+        OrderStatus.UNKNOWN -> Color.DarkGray
     }
 }
 
