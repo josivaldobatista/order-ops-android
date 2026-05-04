@@ -10,9 +10,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import com.jfb.orderops.payment.domain.usecase.GetDailyPaymentReportUseCase
+import com.jfb.orderops.payment.domain.model.DailyPaymentReport
 
 class PaymentReportViewModel(
-    private val useCase: GetPaymentReportUseCase
+    private val useCase: GetPaymentReportUseCase,
+    private val dailyUseCase: GetDailyPaymentReportUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PaymentReportUiState())
@@ -26,27 +29,24 @@ class PaymentReportViewModel(
                 it.copy(isLoading = true, errorMessage = null)
             }
 
-            when (val result = useCase.execute(today, today)) {
+            val reportResult = useCase.execute(today, today)
+            val dailyResult = dailyUseCase.execute(today, today)
 
-                is AppResult.Success -> {
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            report = result.data
-                        )
-                    }
+            if (reportResult is AppResult.Success && dailyResult is AppResult.Success) {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        report = reportResult.data,
+                        daily = dailyResult.data
+                    )
                 }
-
-                is AppResult.Error -> {
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            errorMessage = result.message
-                        )
-                    }
+            } else {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = "Erro ao carregar relatório."
+                    )
                 }
-
-                AppResult.Loading -> Unit
             }
         }
     }

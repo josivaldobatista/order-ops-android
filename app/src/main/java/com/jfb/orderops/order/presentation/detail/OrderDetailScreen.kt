@@ -170,7 +170,7 @@ private fun OrderDetailContent(
         onCancel = onCancel
     )
 
-    if (order.status == OrderStatus.OPEN) {
+    if (order.status.canEditItems()) {
         Spacer(Modifier.height(24.dp))
 
         AddItemSection(
@@ -214,7 +214,7 @@ private fun OrderDetailContent(
                         Text("Subtotal: R$ ${"%.2f".format(item.totalPrice)}")
                     }
 
-                    if (order.status == OrderStatus.OPEN) {
+                    if (order.status.canEditItems()) {
                         TextButton(
                             onClick = { onRemoveItem(item.id) },
                             enabled = !isLoading
@@ -413,6 +413,12 @@ private fun OrderStatusActions(
             }
         }
     }
+}
+
+private fun OrderStatus.canEditItems(): Boolean {
+    return this == OrderStatus.OPEN ||
+            this == OrderStatus.IN_PREPARATION ||
+            this == OrderStatus.READY
 }
 
 private fun OrderStatus.toColor(): Color {

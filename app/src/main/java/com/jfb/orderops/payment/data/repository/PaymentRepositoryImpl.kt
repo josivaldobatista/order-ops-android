@@ -4,6 +4,7 @@ import com.jfb.orderops.core.result.AppResult
 import com.jfb.orderops.payment.data.dto.PayOrderRequest
 import com.jfb.orderops.payment.data.dto.toDomain
 import com.jfb.orderops.payment.data.remote.PaymentApi
+import com.jfb.orderops.payment.domain.model.DailyPaymentReport
 import com.jfb.orderops.payment.domain.model.Payment
 import com.jfb.orderops.payment.domain.model.PaymentReport
 import com.jfb.orderops.payment.domain.repository.PaymentRepository
@@ -58,6 +59,25 @@ class PaymentRepositoryImpl(
         } catch (e: Exception) {
             AppResult.Error(
                 message = e.message ?: "Erro ao carregar relatório.",
+                throwable = e
+            )
+        }
+    }
+
+    override suspend fun getDailyReport(
+        start: String,
+        end: String
+    ): AppResult<List<DailyPaymentReport>> {
+        return try {
+            val dailyReport = api.getDailyReport(
+                start = start,
+                end = end
+            ).map { it.toDomain() }
+
+            AppResult.Success(dailyReport)
+        } catch (e: Exception) {
+            AppResult.Error(
+                message = e.message ?: "Erro ao carregar relatório diário.",
                 throwable = e
             )
         }

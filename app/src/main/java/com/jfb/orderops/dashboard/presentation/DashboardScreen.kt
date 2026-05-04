@@ -34,6 +34,7 @@ import com.jfb.orderops.order.presentation.list.OrdersScreen
 import com.jfb.orderops.order.presentation.list.OrdersViewModel
 import com.jfb.orderops.order.presentation.list.OrdersViewModelFactory
 import com.jfb.orderops.payment.data.repository.PaymentRepositoryImpl
+import com.jfb.orderops.payment.domain.usecase.GetDailyPaymentReportUseCase
 import com.jfb.orderops.payment.domain.usecase.GetPaymentReportUseCase
 import com.jfb.orderops.payment.presentation.report.PaymentReportScreen
 import com.jfb.orderops.payment.presentation.report.PaymentReportViewModel
@@ -76,15 +77,6 @@ fun DashboardScreen(
     val ordersUiState = ordersViewModel.uiState.collectAsState().value
 
     val productApi = RetrofitClient.createProductApi(sessionStorage)
-    val paymentApi = RetrofitClient.createPaymentApi(sessionStorage)
-    val paymentRepository = PaymentRepositoryImpl(paymentApi)
-    val getReportUseCase = GetPaymentReportUseCase(paymentRepository)
-
-    val reportViewModel: PaymentReportViewModel = viewModel(
-        factory = PaymentReportViewModelFactory(getReportUseCase)
-    )
-
-    val reportUiState = reportViewModel.uiState.collectAsState().value
     val productRepository = ProductRepositoryImpl(productApi)
     val listProductsUseCase = ListProductsUseCase(productRepository)
 
@@ -92,6 +84,19 @@ fun DashboardScreen(
         factory = ProductsViewModelFactory(listProductsUseCase)
     )
     val productsUiState = productsViewModel.uiState.collectAsState().value
+
+    val paymentApi = RetrofitClient.createPaymentApi(sessionStorage)
+    val paymentRepository = PaymentRepositoryImpl(paymentApi)
+    val getReportUseCase = GetPaymentReportUseCase(paymentRepository)
+    val getDailyUseCase = GetDailyPaymentReportUseCase(paymentRepository)
+
+    val reportViewModel: PaymentReportViewModel = viewModel(
+        factory = PaymentReportViewModelFactory(
+            reportUseCase = getReportUseCase,
+            dailyUseCase = getDailyUseCase
+        )
+    )
+    val reportUiState = reportViewModel.uiState.collectAsState().value
 
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -127,19 +132,31 @@ fun DashboardScreen(
         }
 
         TabRow(selectedTabIndex = selectedTab) {
-            Tab(selected = selectedTab == 0, onClick = { selectedTab = 0 }) {
+            Tab(
+                selected = selectedTab == 0,
+                onClick = { selectedTab = 0 }
+            ) {
                 Text("Mesas")
             }
 
-            Tab(selected = selectedTab == 1, onClick = { selectedTab = 1 }) {
+            Tab(
+                selected = selectedTab == 1,
+                onClick = { selectedTab = 1 }
+            ) {
                 Text("Pedidos")
             }
 
-            Tab(selected = selectedTab == 2, onClick = { selectedTab = 2 }) {
+            Tab(
+                selected = selectedTab == 2,
+                onClick = { selectedTab = 2 }
+            ) {
                 Text("Produtos")
             }
 
-            Tab(selected = selectedTab == 3, onClick = { selectedTab = 3 }) {
+            Tab(
+                selected = selectedTab == 3,
+                onClick = { selectedTab = 3 }
+            ) {
                 Text("Relatórios")
             }
         }

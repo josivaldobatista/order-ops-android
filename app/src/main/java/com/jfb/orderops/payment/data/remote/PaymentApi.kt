@@ -1,5 +1,6 @@
 package com.jfb.orderops.payment.data.remote
 
+import com.jfb.orderops.payment.data.dto.DailyPaymentReportResponse
 import com.jfb.orderops.payment.data.dto.PayOrderRequest
 import com.jfb.orderops.payment.data.dto.PaymentResponse
 import retrofit2.http.Body
@@ -29,4 +30,10 @@ interface PaymentApi {
         @Query("start") start: String,
         @Query("end") end: String
     ): Double
+
+    @GET("api/v1/payments/daily-report")
+    suspend fun getDailyReport(
+        @Query("start") start: String,
+        @Query("end") end: String
+    ): List<DailyPaymentReportResponse>
 }
