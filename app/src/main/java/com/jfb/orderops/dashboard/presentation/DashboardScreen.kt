@@ -33,6 +33,11 @@ import com.jfb.orderops.order.domain.usecase.ListOrdersUseCase
 import com.jfb.orderops.order.presentation.list.OrdersScreen
 import com.jfb.orderops.order.presentation.list.OrdersViewModel
 import com.jfb.orderops.order.presentation.list.OrdersViewModelFactory
+import com.jfb.orderops.payment.data.repository.PaymentRepositoryImpl
+import com.jfb.orderops.payment.domain.usecase.GetPaymentReportUseCase
+import com.jfb.orderops.payment.presentation.report.PaymentReportScreen
+import com.jfb.orderops.payment.presentation.report.PaymentReportViewModel
+import com.jfb.orderops.payment.presentation.report.PaymentReportViewModelFactory
 import com.jfb.orderops.product.data.repository.ProductRepositoryImpl
 import com.jfb.orderops.product.domain.usecase.ListProductsUseCase
 import com.jfb.orderops.product.presentation.list.ProductsScreen
@@ -71,6 +76,15 @@ fun DashboardScreen(
     val ordersUiState = ordersViewModel.uiState.collectAsState().value
 
     val productApi = RetrofitClient.createProductApi(sessionStorage)
+    val paymentApi = RetrofitClient.createPaymentApi(sessionStorage)
+    val paymentRepository = PaymentRepositoryImpl(paymentApi)
+    val getReportUseCase = GetPaymentReportUseCase(paymentRepository)
+
+    val reportViewModel: PaymentReportViewModel = viewModel(
+        factory = PaymentReportViewModelFactory(getReportUseCase)
+    )
+
+    val reportUiState = reportViewModel.uiState.collectAsState().value
     val productRepository = ProductRepositoryImpl(productApi)
     val listProductsUseCase = ListProductsUseCase(productRepository)
 
@@ -123,6 +137,10 @@ fun DashboardScreen(
 
             Tab(selected = selectedTab == 2, onClick = { selectedTab = 2 }) {
                 Text("Produtos")
+            }
+
+            Tab(selected = selectedTab == 3, onClick = { selectedTab = 3 }) {
+                Text("Relatórios")
             }
         }
 
@@ -184,6 +202,11 @@ fun DashboardScreen(
                     onRefresh = productsViewModel::loadProducts
                 )
             }
+
+            3 -> PaymentReportScreen(
+                uiState = reportUiState,
+                onLoad = reportViewModel::loadToday
+            )
         }
     }
 }

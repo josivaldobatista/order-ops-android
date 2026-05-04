@@ -6,6 +6,10 @@ import retrofit2.http.Body
 import retrofit2.http.POST
 import retrofit2.http.Path
 
+import com.jfb.orderops.payment.data.dto.PaymentReportResponse
+import retrofit2.http.GET
+import retrofit2.http.Query
+
 interface PaymentApi {
 
     @POST("api/v1/orders/{orderId}/payments")
@@ -13,4 +17,16 @@ interface PaymentApi {
         @Path("orderId") orderId: Long,
         @Body request: PayOrderRequest
     ): PaymentResponse
+
+    @GET("api/v1/payments/report")
+    suspend fun getReport(
+        @Query("start") start: String,
+        @Query("end") end: String
+    ): PaymentReportResponse
+
+    @GET("api/v1/payments/ticket-average")
+    suspend fun getTicketAverage(
+        @Query("start") start: String,
+        @Query("end") end: String
+    ): Double
 }

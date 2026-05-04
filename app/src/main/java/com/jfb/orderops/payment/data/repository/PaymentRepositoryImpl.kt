@@ -5,6 +5,7 @@ import com.jfb.orderops.payment.data.dto.PayOrderRequest
 import com.jfb.orderops.payment.data.dto.toDomain
 import com.jfb.orderops.payment.data.remote.PaymentApi
 import com.jfb.orderops.payment.domain.model.Payment
+import com.jfb.orderops.payment.domain.model.PaymentReport
 import com.jfb.orderops.payment.domain.repository.PaymentRepository
 import java.math.BigDecimal
 
@@ -31,6 +32,32 @@ class PaymentRepositoryImpl(
         } catch (e: Exception) {
             AppResult.Error(
                 message = e.message ?: "Erro ao pagar pedido",
+                throwable = e
+            )
+        }
+    }
+
+    override suspend fun getReport(
+        start: String,
+        end: String
+    ): AppResult<PaymentReport> {
+        return try {
+            val reportResponse = api.getReport(
+                start = start,
+                end = end
+            )
+
+            val ticketAverage = api.getTicketAverage(
+                start = start,
+                end = end
+            )
+
+            AppResult.Success(
+                reportResponse.toDomain(ticketAverage)
+            )
+        } catch (e: Exception) {
+            AppResult.Error(
+                message = e.message ?: "Erro ao carregar relatório.",
                 throwable = e
             )
         }
