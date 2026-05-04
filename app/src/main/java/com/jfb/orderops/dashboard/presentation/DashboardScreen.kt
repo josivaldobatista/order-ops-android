@@ -89,11 +89,20 @@ fun DashboardScreen(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = 32.dp)
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 12.dp,
+                    bottom = 16.dp
+                ),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text("OrderOps", style = MaterialTheme.typography.titleLarge)
@@ -118,15 +127,30 @@ fun DashboardScreen(
         }
 
         when (selectedTab) {
-            0 -> ServiceTablesScreen(
-                uiState = serviceTablesUiState,
-                onRefresh = serviceTablesViewModel::loadServiceTables,
-                onTableClick = { tableId ->
-                    navController.navigate(
-                        AppRoute.CreateOrder.createRoute(tableId)
-                    )
+            0 -> Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Button(
+                    onClick = {
+                        navController.navigate(AppRoute.CreateServiceTable.route)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text("Nova mesa")
                 }
-            )
+
+                ServiceTablesScreen(
+                    uiState = serviceTablesUiState,
+                    onRefresh = serviceTablesViewModel::loadServiceTables,
+                    onTableClick = { tableId ->
+                        navController.navigate(
+                            AppRoute.CreateOrder.createRoute(tableId)
+                        )
+                    }
+                )
+            }
 
             1 -> OrdersScreen(
                 uiState = ordersUiState,

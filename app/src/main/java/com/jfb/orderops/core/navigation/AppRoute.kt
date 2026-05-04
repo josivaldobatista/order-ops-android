@@ -9,6 +9,8 @@ sealed class AppRoute(
 
     data object CreateProduct : AppRoute("create-product")
 
+    data object CreateServiceTable : AppRoute("create-service-table")
+
     data object CreateOrder : AppRoute("create-order/{serviceTableId}") {
         fun createRoute(serviceTableId: Long): String {
             return "create-order/$serviceTableId"

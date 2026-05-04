@@ -8,12 +8,20 @@ import com.jfb.orderops.core.navigation.AppNavHost
 import com.jfb.orderops.core.storage.SessionStorage
 import com.jfb.orderops.ui.theme.OrderOpsTheme
 
+import androidx.core.view.WindowInsetsControllerCompat
+
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         val sessionStorage = SessionStorage(applicationContext)
+
+        window.statusBarColor = android.graphics.Color.WHITE
+        window.navigationBarColor = android.graphics.Color.WHITE
+
+        WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = true
+        WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightNavigationBars = true
 
         setContent {
             OrderOpsTheme {

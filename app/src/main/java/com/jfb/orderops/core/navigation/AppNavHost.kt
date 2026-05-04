@@ -38,12 +38,18 @@ import com.jfb.orderops.payment.presentation.pay.PaymentScreen
 import com.jfb.orderops.payment.presentation.pay.PaymentViewModel
 import com.jfb.orderops.payment.presentation.pay.PaymentViewModelFactory
 import com.jfb.orderops.product.data.repository.ProductRepositoryImpl
-import com.jfb.orderops.product.domain.usecase.ListProductsUseCase
-
 import com.jfb.orderops.product.domain.usecase.CreateProductUseCase
+import com.jfb.orderops.product.domain.usecase.ListProductsUseCase
 import com.jfb.orderops.product.presentation.create.CreateProductScreen
 import com.jfb.orderops.product.presentation.create.CreateProductViewModel
 import com.jfb.orderops.product.presentation.create.CreateProductViewModelFactory
+import com.jfb.orderops.serviceTable.data.repository.ServiceTableRepositoryImpl
+import com.jfb.orderops.serviceTable.domain.usecase.CreateServiceTableUseCase
+import com.jfb.orderops.serviceTable.presentation.create.CreateServiceTableScreen
+import com.jfb.orderops.serviceTable.presentation.create.CreateServiceTableViewModel
+import com.jfb.orderops.serviceTable.presentation.create.CreateServiceTableViewModelFactory
+import com.jfb.orderops.core.auth.AuthSessionEvent
+import com.jfb.orderops.core.auth.AuthSessionEventBus
 
 @Composable
 fun AppNavHost(
@@ -69,6 +75,20 @@ fun AppNavHost(
         AppRoute.Dashboard.route
     } else {
         AppRoute.Login.route
+    }
+
+    LaunchedEffect(Unit) {
+        AuthSessionEventBus.events.collect { event ->
+            when (event) {
+                AuthSessionEvent.SessionExpired -> {
+                    navController.navigate(AppRoute.Login.route) {
+                        popUpTo(0) {
+                            inclusive = true
+                        }
+                    }
+                }
+            }
+        }
     }
 
     NavHost(
@@ -172,6 +192,33 @@ fun AppNavHost(
                 onPriceChange = createProductViewModel::onPriceChange,
                 onCreate = {
                     createProductViewModel.create {
+                        navController.popBackStack()
+                    }
+                },
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(AppRoute.CreateServiceTable.route) {
+
+            val serviceTableApi = RetrofitClient.createServiceTableApi(sessionStorage)
+            val repository = ServiceTableRepositoryImpl(serviceTableApi)
+            val useCase = CreateServiceTableUseCase(repository)
+
+            val viewModel: CreateServiceTableViewModel = viewModel(
+                factory = CreateServiceTableViewModelFactory(useCase)
+            )
+
+            val uiState = viewModel.uiState.collectAsState().value
+
+            CreateServiceTableScreen(
+                uiState = uiState,
+                onNumberChange = viewModel::onNumberChange,
+                onCapacityChange = viewModel::onCapacityChange,
+                onCreate = {
+                    viewModel.create {
                         navController.popBackStack()
                     }
                 },

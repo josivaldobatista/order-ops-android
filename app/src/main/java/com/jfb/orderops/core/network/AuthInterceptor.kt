@@ -1,5 +1,6 @@
 package com.jfb.orderops.core.network
 
+import com.jfb.orderops.core.auth.AuthSessionEventBus
 import com.jfb.orderops.core.storage.SessionStorage
 import okhttp3.Interceptor
 import okhttp3.Response
@@ -9,20 +10,21 @@ class AuthInterceptor(
 ) : Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
-        val originalRequest = chain.request()
-
         val token = sessionStorage.getAccessToken()
-        val tokenType = sessionStorage.getTokenType()
 
-        val requestBuilder = originalRequest.newBuilder()
+        val requestBuilder = chain.request().newBuilder()
 
         if (!token.isNullOrBlank()) {
-            requestBuilder.addHeader(
-                "Authorization",
-                "$tokenType $token"
-            )
+            requestBuilder.addHeader("Authorization", "Bearer $token")
         }
 
-        return chain.proceed(requestBuilder.build())
+        val response = chain.proceed(requestBuilder.build())
+
+        if (response.code == 401 || response.code == 403) {
+            sessionStorage.clear()
+            AuthSessionEventBus.notifySessionExpired()
+        }
+
+        return response
     }
 }
