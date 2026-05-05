@@ -3,6 +3,7 @@ package com.jfb.orderops.payment.presentation.pay
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jfb.orderops.core.result.AppResult
+import com.jfb.orderops.order.domain.usecase.GetOrderByIdUseCase
 import com.jfb.orderops.payment.domain.model.PaymentMethod
 import com.jfb.orderops.payment.domain.usecase.PayOrderUseCase
 import com.jfb.orderops.payment.presentation.state.PaymentUiState
@@ -15,7 +16,8 @@ import kotlinx.coroutines.launch
 class PaymentViewModel(
     orderId: Long,
     amount: Double,
-    private val payOrderUseCase: PayOrderUseCase
+    private val payOrderUseCase: PayOrderUseCase,
+    private val getOrderByIdUseCase: GetOrderByIdUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -25,6 +27,40 @@ class PaymentViewModel(
         )
     )
     val uiState: StateFlow<PaymentUiState> = _uiState.asStateFlow()
+
+    fun loadOrder() {
+        val orderId = _uiState.value.orderId
+
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(isLoading = true, errorMessage = null)
+            }
+
+            when (val result = getOrderByIdUseCase.execute(orderId)) {
+                is AppResult.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            order = result.data,
+                            amount = result.data.totalAmount,
+                            errorMessage = null
+                        )
+                    }
+                }
+
+                is AppResult.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = result.message
+                        )
+                    }
+                }
+
+                AppResult.Loading -> Unit
+            }
+        }
+    }
 
     fun onMethodSelected(method: PaymentMethod) {
         _uiState.update {

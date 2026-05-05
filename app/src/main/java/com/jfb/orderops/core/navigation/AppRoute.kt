@@ -28,4 +28,10 @@ sealed class AppRoute(
             return "order-detail/$orderId"
         }
     }
+
+    data object Receipt : AppRoute("receipt/{orderId}/{method}") {
+        fun createRoute(orderId: Long, method: String): String {
+            return "receipt/$orderId/$method"
+        }
+    }
 }

@@ -3,6 +3,7 @@ package com.jfb.orderops.core.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -14,8 +15,11 @@ import com.jfb.orderops.auth.domain.usecase.LoginUseCase
 import com.jfb.orderops.auth.presentation.login.LoginScreen
 import com.jfb.orderops.auth.presentation.login.LoginViewModel
 import com.jfb.orderops.auth.presentation.login.LoginViewModelFactory
+import com.jfb.orderops.core.auth.AuthSessionEvent
+import com.jfb.orderops.core.auth.AuthSessionEventBus
 import com.jfb.orderops.core.network.RetrofitClient
 import com.jfb.orderops.core.storage.SessionStorage
+import com.jfb.orderops.core.util.ShareImageUtils
 import com.jfb.orderops.dashboard.presentation.DashboardScreen
 import com.jfb.orderops.order.data.repository.OrderRepositoryImpl
 import com.jfb.orderops.order.domain.usecase.AddOrderItemUseCase
@@ -33,6 +37,7 @@ import com.jfb.orderops.order.presentation.detail.OrderDetailScreen
 import com.jfb.orderops.order.presentation.detail.OrderDetailViewModel
 import com.jfb.orderops.order.presentation.detail.OrderDetailViewModelFactory
 import com.jfb.orderops.payment.data.repository.PaymentRepositoryImpl
+import com.jfb.orderops.payment.domain.model.PaymentMethod
 import com.jfb.orderops.payment.domain.usecase.PayOrderUseCase
 import com.jfb.orderops.payment.presentation.pay.PaymentScreen
 import com.jfb.orderops.payment.presentation.pay.PaymentViewModel
@@ -43,13 +48,13 @@ import com.jfb.orderops.product.domain.usecase.ListProductsUseCase
 import com.jfb.orderops.product.presentation.create.CreateProductScreen
 import com.jfb.orderops.product.presentation.create.CreateProductViewModel
 import com.jfb.orderops.product.presentation.create.CreateProductViewModelFactory
+import com.jfb.orderops.receipt.presentation.ReceiptBitmapRenderer
+import com.jfb.orderops.receipt.presentation.ReceiptScreen
 import com.jfb.orderops.serviceTable.data.repository.ServiceTableRepositoryImpl
 import com.jfb.orderops.serviceTable.domain.usecase.CreateServiceTableUseCase
 import com.jfb.orderops.serviceTable.presentation.create.CreateServiceTableScreen
 import com.jfb.orderops.serviceTable.presentation.create.CreateServiceTableViewModel
 import com.jfb.orderops.serviceTable.presentation.create.CreateServiceTableViewModelFactory
-import com.jfb.orderops.core.auth.AuthSessionEvent
-import com.jfb.orderops.core.auth.AuthSessionEventBus
 
 @Composable
 fun AppNavHost(
@@ -130,23 +135,37 @@ fun AppNavHost(
             val paymentRepository = PaymentRepositoryImpl(paymentApi)
             val payOrderUseCase = PayOrderUseCase(paymentRepository)
 
+            val orderApi = RetrofitClient.createOrderApi(sessionStorage)
+            val orderRepository = OrderRepositoryImpl(orderApi)
+            val getOrderByIdUseCase = GetOrderByIdUseCase(orderRepository)
+
             val viewModel: PaymentViewModel = viewModel(
                 factory = PaymentViewModelFactory(
                     orderId = orderId,
                     amount = amount,
-                    payOrderUseCase = payOrderUseCase
+                    payOrderUseCase = payOrderUseCase,
+                    getOrderByIdUseCase = getOrderByIdUseCase
                 )
             )
 
             val uiState = viewModel.uiState.collectAsState().value
+
+            LaunchedEffect(orderId) {
+                viewModel.loadOrder()
+            }
 
             PaymentScreen(
                 uiState = uiState,
                 onMethodSelected = viewModel::onMethodSelected,
                 onPayClick = {
                     viewModel.pay {
-                        navController.navigate(AppRoute.Dashboard.route) {
-                            popUpTo(AppRoute.Dashboard.route) {
+                        navController.navigate(
+                            AppRoute.Receipt.createRoute(
+                                orderId = uiState.orderId,
+                                method = uiState.selectedMethod.name
+                            )
+                        ) {
+                            popUpTo(AppRoute.Payment.route) {
                                 inclusive = true
                             }
                         }
@@ -202,7 +221,6 @@ fun AppNavHost(
         }
 
         composable(AppRoute.CreateServiceTable.route) {
-
             val serviceTableApi = RetrofitClient.createServiceTableApi(sessionStorage)
             val repository = ServiceTableRepositoryImpl(serviceTableApi)
             val useCase = CreateServiceTableUseCase(repository)
@@ -286,6 +304,96 @@ fun AppNavHost(
                     navController.popBackStack()
                 }
             )
+        }
+
+        composable(
+            route = AppRoute.Receipt.route,
+            arguments = listOf(
+                navArgument("orderId") { type = NavType.LongType },
+                navArgument("method") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+
+            val orderId = backStackEntry.arguments?.getLong("orderId") ?: return@composable
+            val methodName = backStackEntry.arguments?.getString("method") ?: PaymentMethod.PIX.name
+
+            val paymentMethod = runCatching {
+                PaymentMethod.valueOf(methodName)
+            }.getOrDefault(PaymentMethod.PIX)
+
+            val orderApi = RetrofitClient.createOrderApi(sessionStorage)
+            val orderRepository = OrderRepositoryImpl(orderApi)
+            val getOrderByIdUseCase = GetOrderByIdUseCase(orderRepository)
+
+            val productApi = RetrofitClient.createProductApi(sessionStorage)
+            val productRepository = ProductRepositoryImpl(productApi)
+            val listProductsUseCase = ListProductsUseCase(productRepository)
+
+            val orderDetailViewModel: OrderDetailViewModel = viewModel(
+                factory = OrderDetailViewModelFactory(
+                    orderId = orderId,
+                    getOrderByIdUseCase = getOrderByIdUseCase,
+                    sendToPreparationUseCase = SendOrderToPreparationUseCase(orderRepository),
+                    markAsReadyUseCase = MarkOrderAsReadyUseCase(orderRepository),
+                    finishOrderUseCase = FinishOrderUseCase(orderRepository),
+                    cancelOrderUseCase = CancelOrderUseCase(orderRepository),
+                    addOrderItemUseCase = AddOrderItemUseCase(orderRepository),
+                    removeOrderItemUseCase = RemoveOrderItemUseCase(orderRepository),
+                    listProductsUseCase = listProductsUseCase
+                )
+            )
+
+            val uiState = orderDetailViewModel.uiState.collectAsState().value
+
+            LaunchedEffect(orderId) {
+                orderDetailViewModel.loadOrder()
+            }
+
+            val order = uiState.order
+            val context = LocalContext.current
+
+            if (order == null) {
+                val receiptBitmap = ReceiptBitmapRenderer.renderLoading()
+
+                ReceiptScreen(
+                    receiptBitmap = receiptBitmap,
+                    onShare = {
+                        ShareImageUtils.shareBitmap(
+                            context = context,
+                            bitmap = receiptBitmap
+                        )
+                    },
+                    onClose = {
+                        navController.navigate(AppRoute.Dashboard.route) {
+                            popUpTo(AppRoute.Dashboard.route) {
+                                inclusive = true
+                            }
+                        }
+                    }
+                )
+            } else {
+                val receiptBitmap = ReceiptBitmapRenderer.render(
+                    order = order,
+                    paymentMethod = paymentMethod
+                )
+
+                ReceiptScreen(
+                    receiptBitmap = receiptBitmap,
+                    onShare = {
+                        ShareImageUtils.shareBitmap(
+                            context = context,
+                            bitmap = receiptBitmap
+                        )
+                    },
+                    onClose = {
+                        navController.navigate(AppRoute.Dashboard.route) {
+                            popUpTo(AppRoute.Dashboard.route) {
+                                inclusive = true
+                            }
+                        }
+                    }
+                )
+            }
         }
 
         composable(
