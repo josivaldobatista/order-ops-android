@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.jfb.orderops.order.presentation.state.CreateOrderUiState
 import com.jfb.orderops.product.domain.model.Product
+import androidx.compose.foundation.layout.statusBarsPadding
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,8 +32,8 @@ fun CreateOrderScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .statusBarsPadding()
             .padding(16.dp)
-            .verticalScroll(rememberScrollState())
     ) {
         Text(
             text = "Novo pedido - Mesa ${uiState.serviceTableId}",

@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.jfb.orderops.payment.domain.model.PaymentMethod
 import com.jfb.orderops.payment.presentation.state.PaymentUiState
+import androidx.compose.foundation.layout.statusBarsPadding
 
 @Composable
 fun PaymentScreen(
@@ -29,6 +30,7 @@ fun PaymentScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .statusBarsPadding()
             .padding(16.dp)
     ) {
         OutlinedButton(
