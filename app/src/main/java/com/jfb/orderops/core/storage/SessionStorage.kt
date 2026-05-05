@@ -36,6 +36,10 @@ class SessionStorage(
         return !getAccessToken().isNullOrBlank()
     }
 
+    fun getCompanyId(): Long {
+        return preferences.getLong(KEY_COMPANY_ID, 0L)
+    }
+
     fun clear() {
         preferences.edit().clear().apply()
     }

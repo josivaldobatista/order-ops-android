@@ -1,6 +1,10 @@
 package com.jfb.orderops.receipt.presentation
 
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Typeface
 import com.jfb.orderops.order.domain.model.Order
 import com.jfb.orderops.payment.domain.model.PaymentMethod
 import java.time.LocalDateTime
@@ -9,68 +13,63 @@ import java.time.format.DateTimeFormatter
 object ReceiptBitmapRenderer {
 
     private const val WIDTH = 576
-    private const val PADDING = 32
-    private const val LINE_HEIGHT = 34
+    private const val PADDING = 28
+    private const val LINE_HEIGHT = 30
 
     fun render(
         order: Order,
-        paymentMethod: PaymentMethod
+        paymentMethod: PaymentMethod,
+        companyName: String = "OrderOps",
+        document: String = "00.000.000/0000-00",
+        address: String = "Endereço não informado"
     ): Bitmap {
-        val lines = buildLines(order, paymentMethod)
+        val lines = buildLines(
+            order = order,
+            paymentMethod = paymentMethod,
+            companyName = companyName,
+            document = document,
+            address = address
+        )
 
-        val height = PADDING * 2 + lines.size * LINE_HEIGHT + 200
+        val height = PADDING * 2 + lines.size * LINE_HEIGHT
 
         val bitmap = Bitmap.createBitmap(WIDTH, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
 
         canvas.drawColor(Color.WHITE)
 
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        val normalPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.BLACK
-            textSize = 26f
+            textSize = 25f
             typeface = Typeface.create(Typeface.MONOSPACE, Typeface.NORMAL)
         }
 
-        val boldPaint = Paint(paint).apply {
+        val boldPaint = Paint(normalPaint).apply {
+            textSize = 27f
             typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
         }
 
-        var y = PADDING + 30f
+        val titlePaint = Paint(normalPaint).apply {
+            textSize = 34f
+            typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+        }
+
+        var y = PADDING + 28f
 
         lines.forEach { line ->
-            val currentPaint = if (line.bold) boldPaint else paint
-
-            when (line.align) {
-                Align.CENTER -> {
-                    val textWidth = currentPaint.measureText(line.text)
-                    canvas.drawText(
-                        line.text,
-                        (WIDTH - textWidth) / 2f,
-                        y,
-                        currentPaint
-                    )
-                }
-
-                Align.LEFT -> {
-                    canvas.drawText(
-                        line.text,
-                        PADDING.toFloat(),
-                        y,
-                        currentPaint
-                    )
-                }
-
-                Align.RIGHT -> {
-                    val textWidth = currentPaint.measureText(line.text)
-                    canvas.drawText(
-                        line.text,
-                        WIDTH - PADDING - textWidth,
-                        y,
-                        currentPaint
-                    )
-                }
+            val paint = when {
+                line.title -> titlePaint
+                line.bold -> boldPaint
+                else -> normalPaint
             }
 
+            val x = when (line.align) {
+                Align.LEFT -> PADDING.toFloat()
+                Align.CENTER -> (WIDTH - paint.measureText(line.text)) / 2f
+                Align.RIGHT -> WIDTH - PADDING - paint.measureText(line.text)
+            }
+
+            canvas.drawText(line.text, x, y, paint)
             y += LINE_HEIGHT
         }
 
@@ -78,8 +77,9 @@ object ReceiptBitmapRenderer {
     }
 
     fun renderLoading(): Bitmap {
-        val bitmap = Bitmap.createBitmap(WIDTH, 300, Bitmap.Config.ARGB_8888)
+        val bitmap = Bitmap.createBitmap(WIDTH, 220, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
+
         canvas.drawColor(Color.WHITE)
 
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -88,59 +88,65 @@ object ReceiptBitmapRenderer {
             typeface = Typeface.create(Typeface.MONOSPACE, Typeface.NORMAL)
         }
 
-        canvas.drawText("Carregando comprovante...", PADDING.toFloat(), 120f, paint)
+        canvas.drawText("Carregando comprovante...", PADDING.toFloat(), 100f, paint)
 
         return bitmap
     }
 
     private fun buildLines(
         order: Order,
-        paymentMethod: PaymentMethod
+        paymentMethod: PaymentMethod,
+        companyName: String,
+        document: String,
+        address: String
     ): List<ReceiptLine> {
         val now = LocalDateTime.now()
         val formatter = DateTimeFormatter.ofPattern("dd/MM/yy HH:mm")
 
         return buildList {
-            addCenter("OrderOps", bold = true)
-            addCenter("00.000.000/0000-00")
-            addCenter("Endereço não informado")
+            addCenter(companyName.uppercase(), title = true)
+            addCenter(document)
+            splitText(address, 34).forEach {
+                addCenter(it)
+            }
             separator()
 
-            addCenter("Pedido: ${order.id}", bold = true)
-            addCenter("Mesa ${order.serviceTableId.toString().padStart(2, '0')}")
+            addCenter("PEDIDO #${order.id}", title = true)
+            addCenter("MESA ${order.serviceTableId.toString().padStart(2, '0')}")
             separator()
 
-            addCenter("Tipo: Consumo no local")
+            addCenter("CONSUMO NO LOCAL")
             separator()
 
+            addLeft("ITENS", bold = true)
             order.items.forEach { item ->
                 addLeftRight(
-                    left = item.productName,
-                    right = "${item.quantity}x ${money(item.totalPrice)}"
+                    left = "${item.quantity}x ${item.productName}",
+                    right = money(item.totalPrice)
                 )
             }
 
             separator()
 
-            addLeftRight("Subtotal (R$)", money(order.totalAmount))
-            addLeftRight("Total (R$)", money(order.totalAmount), bold = true)
+            addLeftRight("Subtotal", money(order.totalAmount))
+            addLeftRight("TOTAL", money(order.totalAmount), bold = true)
 
             separator()
 
-            addLeft("Pagamentos")
+            addLeft("PAGAMENTO", bold = true)
             addLeftRight(paymentMethod.toReceiptText(), money(order.totalAmount))
 
             separator()
 
-            addLeft("Data impressão: ${now.format(formatter)}")
+            addLeft("Impresso em: ${now.format(formatter)}")
 
             addBlank()
-            addCenter("Obrigado pela compra")
+            addCenter("Obrigado pela preferência!")
         }
     }
 
     private fun MutableList<ReceiptLine>.separator() {
-        add(ReceiptLine("-".repeat(36), Align.CENTER))
+        add(ReceiptLine("-".repeat(34), Align.CENTER))
     }
 
     private fun MutableList<ReceiptLine>.addBlank() {
@@ -149,9 +155,10 @@ object ReceiptBitmapRenderer {
 
     private fun MutableList<ReceiptLine>.addCenter(
         text: String,
-        bold: Boolean = false
+        bold: Boolean = false,
+        title: Boolean = false
     ) {
-        add(ReceiptLine(text, Align.CENTER, bold))
+        add(ReceiptLine(text, Align.CENTER, bold, title))
     }
 
     private fun MutableList<ReceiptLine>.addLeft(
@@ -166,15 +173,24 @@ object ReceiptBitmapRenderer {
         right: String,
         bold: Boolean = false
     ) {
-        val maxLeft = 24
-        val cleanLeft = if (left.length > maxLeft) left.take(maxLeft) else left
+        val maxChars = 34
+        val cleanRight = right.take(10)
+        val maxLeft = maxChars - cleanRight.length - 1
+        val cleanLeft = left.take(maxLeft)
 
-        val spaces = " ".repeat(36 - cleanLeft.length - right.length)
-        add(ReceiptLine(cleanLeft + spaces + right, Align.LEFT, bold))
+        val spaces = maxChars - cleanLeft.length - cleanRight.length
+
+        add(
+            ReceiptLine(
+                text = cleanLeft + " ".repeat(spaces.coerceAtLeast(1)) + cleanRight,
+                align = Align.LEFT,
+                bold = bold
+            )
+        )
     }
 
     private fun money(value: Double): String {
-        return "%.2f".format(value).replace(".", ",")
+        return "R$ %.2f".format(value).replace(".", ",")
     }
 
     private fun PaymentMethod.toReceiptText(): String {
@@ -186,10 +202,35 @@ object ReceiptBitmapRenderer {
         }
     }
 
+    private fun splitText(text: String, maxChars: Int): List<String> {
+        val words = text.split(" ")
+        val lines = mutableListOf<String>()
+
+        var currentLine = ""
+
+        for (word in words) {
+            val testLine = if (currentLine.isEmpty()) word else "$currentLine $word"
+
+            if (testLine.length <= maxChars) {
+                currentLine = testLine
+            } else {
+                lines.add(currentLine)
+                currentLine = word
+            }
+        }
+
+        if (currentLine.isNotEmpty()) {
+            lines.add(currentLine)
+        }
+
+        return lines
+    }
+
     private data class ReceiptLine(
         val text: String,
         val align: Align,
-        val bold: Boolean = false
+        val bold: Boolean = false,
+        val title: Boolean = false
     )
 
     private enum class Align {

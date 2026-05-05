@@ -55,6 +55,10 @@ import com.jfb.orderops.serviceTable.domain.usecase.CreateServiceTableUseCase
 import com.jfb.orderops.serviceTable.presentation.create.CreateServiceTableScreen
 import com.jfb.orderops.serviceTable.presentation.create.CreateServiceTableViewModel
 import com.jfb.orderops.serviceTable.presentation.create.CreateServiceTableViewModelFactory
+import com.jfb.orderops.company.data.repository.CompanyRepositoryImpl
+import com.jfb.orderops.company.domain.usecase.GetCompanyByIdUseCase
+import com.jfb.orderops.receipt.presentation.ReceiptViewModel
+import com.jfb.orderops.receipt.presentation.ReceiptViewModelFactory
 
 @Composable
 fun AppNavHost(
@@ -265,6 +269,9 @@ fun AppNavHost(
             val productApi = RetrofitClient.createProductApi(sessionStorage)
             val productRepository = ProductRepositoryImpl(productApi)
             val listProductsUseCase = ListProductsUseCase(productRepository)
+            val companyApi = RetrofitClient.createCompanyApi(sessionStorage)
+            val companyRepository = CompanyRepositoryImpl(companyApi)
+            val getCompanyByIdUseCase = GetCompanyByIdUseCase(companyRepository)
 
             val createOrderViewModel: CreateOrderViewModel = viewModel(
                 factory = CreateOrderViewModelFactory(
@@ -321,48 +328,41 @@ fun AppNavHost(
                 PaymentMethod.valueOf(methodName)
             }.getOrDefault(PaymentMethod.PIX)
 
+            val context = LocalContext.current
+            val companyId = sessionStorage.getCompanyId()
+
             val orderApi = RetrofitClient.createOrderApi(sessionStorage)
             val orderRepository = OrderRepositoryImpl(orderApi)
             val getOrderByIdUseCase = GetOrderByIdUseCase(orderRepository)
 
-            val productApi = RetrofitClient.createProductApi(sessionStorage)
-            val productRepository = ProductRepositoryImpl(productApi)
-            val listProductsUseCase = ListProductsUseCase(productRepository)
+            val companyApi = RetrofitClient.createCompanyApi(sessionStorage)
+            val companyRepository = CompanyRepositoryImpl(companyApi)
+            val getCompanyByIdUseCase = GetCompanyByIdUseCase(companyRepository)
 
-            val orderDetailViewModel: OrderDetailViewModel = viewModel(
-                factory = OrderDetailViewModelFactory(
+            val receiptViewModel: ReceiptViewModel = viewModel(
+                factory = ReceiptViewModelFactory(
                     orderId = orderId,
+                    companyId = companyId,
                     getOrderByIdUseCase = getOrderByIdUseCase,
-                    sendToPreparationUseCase = SendOrderToPreparationUseCase(orderRepository),
-                    markAsReadyUseCase = MarkOrderAsReadyUseCase(orderRepository),
-                    finishOrderUseCase = FinishOrderUseCase(orderRepository),
-                    cancelOrderUseCase = CancelOrderUseCase(orderRepository),
-                    addOrderItemUseCase = AddOrderItemUseCase(orderRepository),
-                    removeOrderItemUseCase = RemoveOrderItemUseCase(orderRepository),
-                    listProductsUseCase = listProductsUseCase
+                    getCompanyByIdUseCase = getCompanyByIdUseCase
                 )
             )
 
-            val uiState = orderDetailViewModel.uiState.collectAsState().value
+            val uiState = receiptViewModel.uiState.collectAsState().value
 
             LaunchedEffect(orderId) {
-                orderDetailViewModel.loadOrder()
+                receiptViewModel.load()
             }
 
             val order = uiState.order
-            val context = LocalContext.current
+            val company = uiState.company
 
-            if (order == null) {
-                val receiptBitmap = ReceiptBitmapRenderer.renderLoading()
+            if (order == null || company == null) {
+                val loadingBitmap = ReceiptBitmapRenderer.renderLoading()
 
                 ReceiptScreen(
-                    receiptBitmap = receiptBitmap,
-                    onShare = {
-                        ShareImageUtils.shareBitmap(
-                            context = context,
-                            bitmap = receiptBitmap
-                        )
-                    },
+                    receiptBitmap = loadingBitmap,
+                    onShare = {},
                     onClose = {
                         navController.navigate(AppRoute.Dashboard.route) {
                             popUpTo(AppRoute.Dashboard.route) {
@@ -372,9 +372,16 @@ fun AppNavHost(
                     }
                 )
             } else {
+                val addressText = company.address?.let { address ->
+                    "${address.street}, ${address.number} - ${address.city}/${address.state}"
+                } ?: "Endereço não informado"
+
                 val receiptBitmap = ReceiptBitmapRenderer.render(
                     order = order,
-                    paymentMethod = paymentMethod
+                    paymentMethod = paymentMethod,
+                    companyName = company.name,
+                    document = company.document,
+                    address = addressText
                 )
 
                 ReceiptScreen(
