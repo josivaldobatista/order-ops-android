@@ -174,15 +174,20 @@ object ReceiptBitmapRenderer {
         bold: Boolean = false
     ) {
         val maxChars = 34
-        val cleanRight = right.take(10)
-        val maxLeft = maxChars - cleanRight.length - 1
-        val cleanLeft = left.take(maxLeft)
+        val rightColumnWidth = 12
+        val leftColumnWidth = maxChars - rightColumnWidth
 
-        val spaces = maxChars - cleanLeft.length - cleanRight.length
+        val cleanLeft = left
+            .take(leftColumnWidth)
+            .padEnd(leftColumnWidth)
+
+        val cleanRight = right
+            .take(rightColumnWidth)
+            .padStart(rightColumnWidth)
 
         add(
             ReceiptLine(
-                text = cleanLeft + " ".repeat(spaces.coerceAtLeast(1)) + cleanRight,
+                text = cleanLeft + cleanRight,
                 align = Align.LEFT,
                 bold = bold
             )
