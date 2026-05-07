@@ -8,10 +8,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -68,6 +70,7 @@ fun OrderDetailScreen(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
         }
@@ -75,6 +78,7 @@ fun OrderDetailScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .statusBarsPadding()
                 .padding(paddingValues)
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState())
@@ -137,13 +141,18 @@ private fun OrderDetailContent(
 ) {
     Text(
         text = "Pedido #${order.id}",
-        style = MaterialTheme.typography.headlineMedium
+        style = MaterialTheme.typography.headlineMedium,
+        color = MaterialTheme.colorScheme.onBackground
     )
 
     Spacer(Modifier.height(16.dp))
 
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        )
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -184,19 +193,27 @@ private fun OrderDetailContent(
 
     Text(
         text = "Itens",
-        style = MaterialTheme.typography.titleLarge
+        style = MaterialTheme.typography.titleLarge,
+        color = MaterialTheme.colorScheme.onBackground
     )
 
     Spacer(Modifier.height(8.dp))
 
     if (order.items.isEmpty()) {
-        Text("Nenhum item no pedido.")
+        Text(
+            text = "Nenhum item no pedido.",
+            color = MaterialTheme.colorScheme.onBackground
+        )
     } else {
         order.items.forEach { item ->
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp)
+                    .padding(vertical = 4.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onSurface
+                )
             ) {
                 Row(
                     modifier = Modifier
@@ -247,7 +264,8 @@ private fun AddItemSection(
 
     Text(
         text = "Adicionar item",
-        style = MaterialTheme.typography.titleMedium
+        style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onBackground
     )
 
     Spacer(Modifier.height(8.dp))
@@ -306,7 +324,8 @@ private fun AddItemSection(
 
         Text(
             text = quantity.toString(),
-            style = MaterialTheme.typography.titleLarge
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         Button(
@@ -387,6 +406,8 @@ private fun OrderStatusActions(
             OrderStatus.READY -> {
                 Button(
                     onClick = onFinish,
+                    enabled = !isLoading,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Pagar pedido")
                 }
@@ -401,15 +422,24 @@ private fun OrderStatusActions(
             }
 
             OrderStatus.FINISHED -> {
-                Text("Pedido finalizado.")
+                Text(
+                    text = "Pedido finalizado.",
+                    color = MaterialTheme.colorScheme.onBackground
+                )
             }
 
             OrderStatus.CANCELLED -> {
-                Text("Pedido cancelado.")
+                Text(
+                    text = "Pedido cancelado.",
+                    color = MaterialTheme.colorScheme.onBackground
+                )
             }
 
             OrderStatus.UNKNOWN -> {
-                Text("Status desconhecido.")
+                Text(
+                    text = "Status desconhecido.",
+                    color = MaterialTheme.colorScheme.onBackground
+                )
             }
         }
     }
@@ -423,11 +453,11 @@ private fun OrderStatus.canEditItems(): Boolean {
 
 private fun OrderStatus.toColor(): Color {
     return when (this) {
-        OrderStatus.OPEN -> Color(0xFF4CAF50)          // verde
-        OrderStatus.IN_PREPARATION -> Color(0xFFFFC107) // amarelo
-        OrderStatus.READY -> Color(0xFF2196F3)         // azul
-        OrderStatus.FINISHED -> Color(0xFF9E9E9E)      // cinza
-        OrderStatus.CANCELLED -> Color(0xFFF44336)     // vermelho
+        OrderStatus.OPEN -> Color(0xFF4CAF50)
+        OrderStatus.IN_PREPARATION -> Color(0xFFFFC107)
+        OrderStatus.READY -> Color(0xFF2196F3)
+        OrderStatus.FINISHED -> Color(0xFF9E9E9E)
+        OrderStatus.CANCELLED -> Color(0xFFF44336)
         OrderStatus.UNKNOWN -> Color.DarkGray
     }
 }

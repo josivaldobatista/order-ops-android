@@ -1,15 +1,33 @@
 package com.jfb.orderops.order.presentation.create
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.jfb.orderops.order.presentation.state.CreateOrderUiState
-import com.jfb.orderops.product.domain.model.Product
-import androidx.compose.foundation.layout.statusBarsPadding
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,151 +47,156 @@ fun CreateOrderScreen(
         it.id == uiState.selectedProductId
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-            .padding(16.dp)
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
     ) {
-        Text(
-            text = "Novo pedido - Mesa ${uiState.serviceTableId}",
-            style = MaterialTheme.typography.headlineMedium
-        )
-
-        Spacer(Modifier.height(16.dp))
-
-        Button(onClick = onBack) {
-            Text("Voltar")
-        }
-
-        Spacer(Modifier.height(24.dp))
-
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = !expanded }
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .padding(16.dp)
         ) {
-            OutlinedTextField(
-                value = selectedProduct?.name ?: "Selecione um produto",
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Produto") },
-                modifier = Modifier
-                    .menuAnchor()
-                    .fillMaxWidth()
+            Text(
+                text = "Novo pedido - Mesa ${uiState.serviceTableId}",
+                style = MaterialTheme.typography.headlineMedium
             )
 
-            ExposedDropdownMenu(
+            Spacer(Modifier.height(16.dp))
+
+            Button(onClick = onBack) {
+                Text("Voltar")
+            }
+
+            Spacer(Modifier.height(24.dp))
+
+            ExposedDropdownMenuBox(
                 expanded = expanded,
-                onDismissRequest = { expanded = false }
+                onExpandedChange = { expanded = !expanded }
             ) {
-                uiState.products.forEach { product ->
-                    DropdownMenuItem(
-                        text = {
-                            Text("${product.name} - R$ ${"%.2f".format(product.price)}")
-                        },
-                        onClick = {
-                            onProductSelected(product.id)
-                            expanded = false
-                        }
-                    )
+                OutlinedTextField(
+                    value = selectedProduct?.name ?: "Selecione um produto",
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Produto") },
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
+                )
+
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    uiState.products.forEach { product ->
+                        DropdownMenuItem(
+                            text = {
+                                Text("${product.name} - R$ ${"%.2f".format(product.price)}")
+                            },
+                            onClick = {
+                                onProductSelected(product.id)
+                                expanded = false
+                            }
+                        )
+                    }
                 }
             }
-        }
 
-        Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(16.dp))
 
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Button(onClick = onDecreaseQuantity) {
-                Text("-")
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Button(onClick = onDecreaseQuantity) {
+                    Text("-")
+                }
+
+                Text(
+                    text = uiState.selectedQuantity.toString(),
+                    style = MaterialTheme.typography.headlineSmall
+                )
+
+                Button(onClick = onIncreaseQuantity) {
+                    Text("+")
+                }
             }
+
+            Spacer(Modifier.height(16.dp))
+
+            Button(
+                onClick = onAddProduct,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Adicionar produto")
+            }
+
+            Spacer(Modifier.height(24.dp))
 
             Text(
-                text = uiState.selectedQuantity.toString(),
-                style = MaterialTheme.typography.headlineSmall
+                text = "Itens adicionados",
+                style = MaterialTheme.typography.titleMedium
             )
 
-            Button(onClick = onIncreaseQuantity) {
-                Text("+")
-            }
-        }
+            Spacer(Modifier.height(8.dp))
 
-        Spacer(Modifier.height(16.dp))
+            if (uiState.addedItems.isEmpty()) {
+                Text("Nenhum produto adicionado.")
+            } else {
+                uiState.addedItems.forEach { (productId, quantity) ->
+                    val product = uiState.products.firstOrNull { it.id == productId }
 
-        Button(
-            onClick = onAddProduct,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Adicionar produto")
-        }
-
-        Spacer(Modifier.height(24.dp))
-
-        Text(
-            text = "Itens adicionados",
-            style = MaterialTheme.typography.titleMedium
-        )
-
-        Spacer(Modifier.height(8.dp))
-
-        if (uiState.addedItems.isEmpty()) {
-            Text("Nenhum produto adicionado.")
-        } else {
-            uiState.addedItems.forEach { (productId, quantity) ->
-                val product = uiState.products.firstOrNull { it.id == productId }
-
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp)
-                ) {
-                    Row(
+                    Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                            .padding(vertical = 4.dp)
                     ) {
-                        Text("${quantity}x ${product?.name ?: "Produto $productId"}")
-
-                        TextButton(
-                            onClick = { onRemoveProduct(productId) }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Remover")
+                            Text("${quantity}x ${product?.name ?: "Produto $productId"}")
+
+                            TextButton(
+                                onClick = { onRemoveProduct(productId) }
+                            ) {
+                                Text("Remover")
+                            }
                         }
                     }
                 }
             }
-        }
-
-        Spacer(Modifier.height(16.dp))
-
-        uiState.errorMessage?.let {
-            Text(
-                text = it,
-                color = MaterialTheme.colorScheme.error
-            )
 
             Spacer(Modifier.height(16.dp))
-        }
 
-        Button(
-            onClick = onCreateOrder,
-            enabled = !uiState.isCreatingOrder,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                if (uiState.isCreatingOrder) {
-                    "Criando..."
-                } else {
-                    "Criar pedido"
-                }
-            )
-        }
+            uiState.errorMessage?.let {
+                Text(
+                    text = it,
+                    color = MaterialTheme.colorScheme.error
+                )
 
-        if (uiState.isLoading) {
-            Spacer(Modifier.height(16.dp))
-            CircularProgressIndicator()
+                Spacer(Modifier.height(16.dp))
+            }
+
+            Button(
+                onClick = onCreateOrder,
+                enabled = !uiState.isCreatingOrder,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    if (uiState.isCreatingOrder) {
+                        "Criando..."
+                    } else {
+                        "Criar pedido"
+                    }
+                )
+            }
+
+            if (uiState.isLoading) {
+                Spacer(Modifier.height(16.dp))
+                CircularProgressIndicator()
+            }
         }
     }
 }

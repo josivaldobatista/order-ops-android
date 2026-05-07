@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -108,122 +109,127 @@ fun DashboardScreen(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(top = 32.dp)
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
     ) {
-        Row(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                    start = 16.dp,
-                    end = 16.dp,
-                    top = 12.dp,
-                    bottom = 16.dp
-                ),
-            horizontalArrangement = Arrangement.SpaceBetween
+                .fillMaxSize()
+                .padding(top = 32.dp)
         ) {
-            Text("OrderOps", style = MaterialTheme.typography.titleLarge)
-
-            Button(onClick = onLogout) {
-                Text("Logout")
-            }
-        }
-
-        TabRow(selectedTabIndex = selectedTab) {
-            Tab(
-                selected = selectedTab == 0,
-                onClick = { selectedTab = 0 }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = 16.dp,
+                        end = 16.dp,
+                        top = 12.dp,
+                        bottom = 16.dp
+                    ),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Mesas")
-            }
+                Text("OrderOps", style = MaterialTheme.typography.titleLarge)
 
-            Tab(
-                selected = selectedTab == 1,
-                onClick = { selectedTab = 1 }
-            ) {
-                Text("Pedidos")
+                Button(onClick = onLogout) {
+                    Text("Logout")
+                }
             }
 
-            Tab(
-                selected = selectedTab == 2,
-                onClick = { selectedTab = 2 }
-            ) {
-                Text("Produtos")
-            }
-
-            Tab(
-                selected = selectedTab == 3,
-                onClick = { selectedTab = 3 }
-            ) {
-                Text("Relatórios")
-            }
-        }
-
-        when (selectedTab) {
-            0 -> Column(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                Button(
-                    onClick = {
-                        navController.navigate(AppRoute.CreateServiceTable.route)
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
+            TabRow(selectedTabIndex = selectedTab) {
+                Tab(
+                    selected = selectedTab == 0,
+                    onClick = { selectedTab = 0 }
                 ) {
-                    Text("Nova mesa")
+                    Text("Mesas")
                 }
 
-                ServiceTablesScreen(
-                    uiState = serviceTablesUiState,
-                    onRefresh = serviceTablesViewModel::loadServiceTables,
-                    onTableClick = { tableId ->
+                Tab(
+                    selected = selectedTab == 1,
+                    onClick = { selectedTab = 1 }
+                ) {
+                    Text("Pedidos")
+                }
+
+                Tab(
+                    selected = selectedTab == 2,
+                    onClick = { selectedTab = 2 }
+                ) {
+                    Text("Produtos")
+                }
+
+                Tab(
+                    selected = selectedTab == 3,
+                    onClick = { selectedTab = 3 }
+                ) {
+                    Text("Relatórios")
+                }
+            }
+
+            when (selectedTab) {
+                0 -> Column(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Button(
+                        onClick = {
+                            navController.navigate(AppRoute.CreateServiceTable.route)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        Text("Nova mesa")
+                    }
+
+                    ServiceTablesScreen(
+                        uiState = serviceTablesUiState,
+                        onRefresh = serviceTablesViewModel::loadServiceTables,
+                        onTableClick = { tableId ->
+                            navController.navigate(
+                                AppRoute.CreateOrder.createRoute(tableId)
+                            )
+                        }
+                    )
+                }
+
+                1 -> OrdersScreen(
+                    uiState = ordersUiState,
+                    onRefresh = { ordersViewModel.loadOrders() },
+                    onStatusSelected = { status ->
+                        ordersViewModel.loadOrders(status)
+                    },
+                    onOrderClick = { orderId ->
                         navController.navigate(
-                            AppRoute.CreateOrder.createRoute(tableId)
+                            AppRoute.OrderDetail.createRoute(orderId)
                         )
                     }
                 )
-            }
 
-            1 -> OrdersScreen(
-                uiState = ordersUiState,
-                onRefresh = { ordersViewModel.loadOrders() },
-                onStatusSelected = { status ->
-                    ordersViewModel.loadOrders(status)
-                },
-                onOrderClick = { orderId ->
-                    navController.navigate(
-                        AppRoute.OrderDetail.createRoute(orderId)
+                2 -> Column(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Button(
+                        onClick = {
+                            navController.navigate(AppRoute.CreateProduct.route)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        Text("Novo produto")
+                    }
+
+                    ProductsScreen(
+                        uiState = productsUiState,
+                        onRefresh = productsViewModel::loadProducts
                     )
                 }
-            )
 
-            2 -> Column(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                Button(
-                    onClick = {
-                        navController.navigate(AppRoute.CreateProduct.route)
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Text("Novo produto")
-                }
-
-                ProductsScreen(
-                    uiState = productsUiState,
-                    onRefresh = productsViewModel::loadProducts
+                3 -> PaymentReportScreen(
+                    uiState = reportUiState,
+                    onLoad = reportViewModel::loadToday
                 )
             }
-
-            3 -> PaymentReportScreen(
-                uiState = reportUiState,
-                onLoad = reportViewModel::loadToday
-            )
         }
     }
 }
