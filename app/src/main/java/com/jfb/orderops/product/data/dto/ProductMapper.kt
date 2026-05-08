@@ -6,6 +6,8 @@ fun ProductResponse.toDomain(): Product {
     return Product(
         id = id,
         name = name,
+        categoryId = categoryId,
+        categoryName = categoryName,
         description = description,
         price = price,
         active = active

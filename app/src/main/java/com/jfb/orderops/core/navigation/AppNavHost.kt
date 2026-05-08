@@ -15,6 +15,10 @@ import com.jfb.orderops.auth.domain.usecase.LoginUseCase
 import com.jfb.orderops.auth.presentation.login.LoginScreen
 import com.jfb.orderops.auth.presentation.login.LoginViewModel
 import com.jfb.orderops.auth.presentation.login.LoginViewModelFactory
+import com.jfb.orderops.category.data.repository.CategoryRepositoryImpl
+import com.jfb.orderops.category.domain.usecase.ListCategoriesUseCase
+import com.jfb.orderops.company.data.repository.CompanyRepositoryImpl
+import com.jfb.orderops.company.domain.usecase.GetCompanyByIdUseCase
 import com.jfb.orderops.core.auth.AuthSessionEvent
 import com.jfb.orderops.core.auth.AuthSessionEventBus
 import com.jfb.orderops.core.network.RetrofitClient
@@ -50,15 +54,13 @@ import com.jfb.orderops.product.presentation.create.CreateProductViewModel
 import com.jfb.orderops.product.presentation.create.CreateProductViewModelFactory
 import com.jfb.orderops.receipt.presentation.ReceiptBitmapRenderer
 import com.jfb.orderops.receipt.presentation.ReceiptScreen
+import com.jfb.orderops.receipt.presentation.ReceiptViewModel
+import com.jfb.orderops.receipt.presentation.ReceiptViewModelFactory
 import com.jfb.orderops.serviceTable.data.repository.ServiceTableRepositoryImpl
 import com.jfb.orderops.serviceTable.domain.usecase.CreateServiceTableUseCase
 import com.jfb.orderops.serviceTable.presentation.create.CreateServiceTableScreen
 import com.jfb.orderops.serviceTable.presentation.create.CreateServiceTableViewModel
 import com.jfb.orderops.serviceTable.presentation.create.CreateServiceTableViewModelFactory
-import com.jfb.orderops.company.data.repository.CompanyRepositoryImpl
-import com.jfb.orderops.company.domain.usecase.GetCompanyByIdUseCase
-import com.jfb.orderops.receipt.presentation.ReceiptViewModel
-import com.jfb.orderops.receipt.presentation.ReceiptViewModelFactory
 
 @Composable
 fun AppNavHost(
@@ -119,66 +121,6 @@ fun AppNavHost(
                     }
                 }
             }
-        }
-
-        composable(
-            route = AppRoute.Payment.route,
-            arguments = listOf(
-                navArgument("orderId") { type = NavType.LongType },
-                navArgument("amount") { type = NavType.StringType }
-            )
-        ) { backStackEntry ->
-
-            val orderId = backStackEntry.arguments?.getLong("orderId") ?: return@composable
-            val amount = backStackEntry.arguments
-                ?.getString("amount")
-                ?.toDoubleOrNull()
-                ?: 0.0
-
-            val paymentApi = RetrofitClient.createPaymentApi(sessionStorage)
-            val paymentRepository = PaymentRepositoryImpl(paymentApi)
-            val payOrderUseCase = PayOrderUseCase(paymentRepository)
-
-            val orderApi = RetrofitClient.createOrderApi(sessionStorage)
-            val orderRepository = OrderRepositoryImpl(orderApi)
-            val getOrderByIdUseCase = GetOrderByIdUseCase(orderRepository)
-
-            val viewModel: PaymentViewModel = viewModel(
-                factory = PaymentViewModelFactory(
-                    orderId = orderId,
-                    amount = amount,
-                    payOrderUseCase = payOrderUseCase,
-                    getOrderByIdUseCase = getOrderByIdUseCase
-                )
-            )
-
-            val uiState = viewModel.uiState.collectAsState().value
-
-            LaunchedEffect(orderId) {
-                viewModel.loadOrder()
-            }
-
-            PaymentScreen(
-                uiState = uiState,
-                onMethodSelected = viewModel::onMethodSelected,
-                onPayClick = {
-                    viewModel.pay {
-                        navController.navigate(
-                            AppRoute.Receipt.createRoute(
-                                orderId = uiState.orderId,
-                                method = uiState.selectedMethod.name
-                            )
-                        ) {
-                            popUpTo(AppRoute.Payment.route) {
-                                inclusive = true
-                            }
-                        }
-                    }
-                },
-                onBack = {
-                    navController.popBackStack()
-                }
-            )
         }
 
         composable(AppRoute.Dashboard.route) {
@@ -269,14 +211,16 @@ fun AppNavHost(
             val productApi = RetrofitClient.createProductApi(sessionStorage)
             val productRepository = ProductRepositoryImpl(productApi)
             val listProductsUseCase = ListProductsUseCase(productRepository)
-            val companyApi = RetrofitClient.createCompanyApi(sessionStorage)
-            val companyRepository = CompanyRepositoryImpl(companyApi)
-            val getCompanyByIdUseCase = GetCompanyByIdUseCase(companyRepository)
+
+            val categoryApi = RetrofitClient.createCategoryApi(sessionStorage)
+            val categoryRepository = CategoryRepositoryImpl(categoryApi)
+            val listCategoriesUseCase = ListCategoriesUseCase(categoryRepository)
 
             val createOrderViewModel: CreateOrderViewModel = viewModel(
                 factory = CreateOrderViewModelFactory(
                     serviceTableId = serviceTableId,
                     listProductsUseCase = listProductsUseCase,
+                    listCategoriesUseCase = listCategoriesUseCase,
                     createOrderUseCase = createOrderUseCase
                 )
             )
@@ -284,15 +228,16 @@ fun AppNavHost(
             val createOrderUiState = createOrderViewModel.uiState.collectAsState().value
 
             LaunchedEffect(serviceTableId) {
-                createOrderViewModel.loadProducts()
+                createOrderViewModel.loadData()
             }
 
             CreateOrderScreen(
                 uiState = createOrderUiState,
-                onProductSelected = createOrderViewModel::onProductSelected,
-                onIncreaseQuantity = createOrderViewModel::increaseQuantity,
-                onDecreaseQuantity = createOrderViewModel::decreaseQuantity,
-                onAddProduct = createOrderViewModel::addSelectedProduct,
+                onCategorySelected = createOrderViewModel::onCategorySelected,
+                onAddProduct = { productId ->
+                    createOrderViewModel.onProductSelected(productId)
+                    createOrderViewModel.addSelectedProduct()
+                },
                 onRemoveProduct = createOrderViewModel::removeProduct,
                 onCreateOrder = {
                     createOrderViewModel.createOrder(
@@ -314,13 +259,71 @@ fun AppNavHost(
         }
 
         composable(
+            route = AppRoute.Payment.route,
+            arguments = listOf(
+                navArgument("orderId") { type = NavType.LongType },
+                navArgument("amount") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val orderId = backStackEntry.arguments?.getLong("orderId") ?: return@composable
+            val amount = backStackEntry.arguments
+                ?.getString("amount")
+                ?.toDoubleOrNull()
+                ?: 0.0
+
+            val paymentApi = RetrofitClient.createPaymentApi(sessionStorage)
+            val paymentRepository = PaymentRepositoryImpl(paymentApi)
+            val payOrderUseCase = PayOrderUseCase(paymentRepository)
+
+            val orderApi = RetrofitClient.createOrderApi(sessionStorage)
+            val orderRepository = OrderRepositoryImpl(orderApi)
+            val getOrderByIdUseCase = GetOrderByIdUseCase(orderRepository)
+
+            val viewModel: PaymentViewModel = viewModel(
+                factory = PaymentViewModelFactory(
+                    orderId = orderId,
+                    amount = amount,
+                    payOrderUseCase = payOrderUseCase,
+                    getOrderByIdUseCase = getOrderByIdUseCase
+                )
+            )
+
+            val uiState = viewModel.uiState.collectAsState().value
+
+            LaunchedEffect(orderId) {
+                viewModel.loadOrder()
+            }
+
+            PaymentScreen(
+                uiState = uiState,
+                onMethodSelected = viewModel::onMethodSelected,
+                onPayClick = {
+                    viewModel.pay {
+                        navController.navigate(
+                            AppRoute.Receipt.createRoute(
+                                orderId = uiState.orderId,
+                                method = uiState.selectedMethod.name
+                            )
+                        ) {
+                            popUpTo(AppRoute.Payment.route) {
+                                inclusive = true
+                            }
+                        }
+                    }
+                },
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(
             route = AppRoute.Receipt.route,
             arguments = listOf(
                 navArgument("orderId") { type = NavType.LongType },
                 navArgument("method") { type = NavType.StringType }
             )
         ) { backStackEntry ->
-
             val orderId = backStackEntry.arguments?.getLong("orderId") ?: return@composable
             val methodName = backStackEntry.arguments?.getString("method") ?: PaymentMethod.PIX.name
 
@@ -461,9 +464,9 @@ fun AppNavHost(
                 events = orderDetailViewModel.events,
                 onFinish = orderDetailViewModel::finish,
                 onCancel = orderDetailViewModel::cancel,
-                onGoToPayment = { orderId, amount ->
+                onGoToPayment = { id, amount ->
                     navController.navigate(
-                        AppRoute.Payment.createRoute(orderId, amount)
+                        AppRoute.Payment.createRoute(id, amount)
                     )
                 },
                 onAddItem = { productId, qty ->

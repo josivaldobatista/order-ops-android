@@ -4,11 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.jfb.orderops.order.domain.usecase.CreateOrderUseCase
 import com.jfb.orderops.product.domain.usecase.ListProductsUseCase
+import com.jfb.orderops.category.domain.usecase.ListCategoriesUseCase
 
 class CreateOrderViewModelFactory(
     private val serviceTableId: Long,
     private val listProductsUseCase: ListProductsUseCase,
-    private val createOrderUseCase: CreateOrderUseCase
+    private val createOrderUseCase: CreateOrderUseCase,
+    private val listCategoriesUseCase: ListCategoriesUseCase,
 ) : ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -17,6 +19,7 @@ class CreateOrderViewModelFactory(
             return CreateOrderViewModel(
                 serviceTableId = serviceTableId,
                 listProductsUseCase = listProductsUseCase,
+                listCategoriesUseCase = listCategoriesUseCase,
                 createOrderUseCase = createOrderUseCase
             ) as T
         }

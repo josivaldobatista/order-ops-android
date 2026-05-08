@@ -1,6 +1,7 @@
 package com.jfb.orderops.core.network
 
 import com.jfb.orderops.auth.data.remote.AuthApi
+import com.jfb.orderops.category.data.remote.CategoryApi
 import com.jfb.orderops.company.data.remote.CompanyApi
 import com.jfb.orderops.core.storage.SessionStorage
 import com.jfb.orderops.order.data.remote.OrderApi
@@ -140,6 +141,27 @@ object RetrofitClient {
             .build()
 
         return retrofit.create(CompanyApi::class.java)
+    }
+
+    fun createCategoryApi(sessionStorage: SessionStorage): CategoryApi {
+        val loggingInterceptor = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        }
+
+        val authInterceptor = AuthInterceptor(sessionStorage)
+
+        val okHttpClient = OkHttpClient.Builder()
+            .addInterceptor(loggingInterceptor)
+            .addInterceptor(authInterceptor)
+            .build()
+
+        val retrofit = Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        return retrofit.create(CategoryApi::class.java)
     }
 
 }
