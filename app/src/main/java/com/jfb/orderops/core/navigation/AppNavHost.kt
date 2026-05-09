@@ -15,40 +15,25 @@ import com.jfb.orderops.auth.domain.usecase.LoginUseCase
 import com.jfb.orderops.auth.presentation.login.LoginScreen
 import com.jfb.orderops.auth.presentation.login.LoginViewModel
 import com.jfb.orderops.auth.presentation.login.LoginViewModelFactory
-import com.jfb.orderops.category.data.repository.CategoryRepositoryImpl
-import com.jfb.orderops.category.domain.usecase.ListCategoriesUseCase
 import com.jfb.orderops.company.data.repository.CompanyRepositoryImpl
 import com.jfb.orderops.company.domain.usecase.GetCompanyByIdUseCase
 import com.jfb.orderops.core.auth.AuthSessionEvent
 import com.jfb.orderops.core.auth.AuthSessionEventBus
-import com.jfb.orderops.core.navigation.graph.productRoutes
+import com.jfb.orderops.core.navigation.graph.categoryGraph
+import com.jfb.orderops.core.navigation.graph.orderGraph
+import com.jfb.orderops.core.navigation.graph.productGraph
 import com.jfb.orderops.core.network.RetrofitClient
 import com.jfb.orderops.core.storage.SessionStorage
 import com.jfb.orderops.core.util.ShareImageUtils
 import com.jfb.orderops.dashboard.presentation.DashboardScreen
 import com.jfb.orderops.order.data.repository.OrderRepositoryImpl
-import com.jfb.orderops.order.domain.usecase.AddOrderItemUseCase
-import com.jfb.orderops.order.domain.usecase.CancelOrderUseCase
-import com.jfb.orderops.order.domain.usecase.CreateOrderUseCase
-import com.jfb.orderops.order.domain.usecase.FinishOrderUseCase
 import com.jfb.orderops.order.domain.usecase.GetOrderByIdUseCase
-import com.jfb.orderops.order.domain.usecase.MarkOrderAsReadyUseCase
-import com.jfb.orderops.order.domain.usecase.RemoveOrderItemUseCase
-import com.jfb.orderops.order.domain.usecase.SendOrderToPreparationUseCase
-import com.jfb.orderops.order.presentation.create.CreateOrderScreen
-import com.jfb.orderops.order.presentation.create.CreateOrderViewModel
-import com.jfb.orderops.order.presentation.create.CreateOrderViewModelFactory
-import com.jfb.orderops.order.presentation.detail.OrderDetailScreen
-import com.jfb.orderops.order.presentation.detail.OrderDetailViewModel
-import com.jfb.orderops.order.presentation.detail.OrderDetailViewModelFactory
 import com.jfb.orderops.payment.data.repository.PaymentRepositoryImpl
 import com.jfb.orderops.payment.domain.model.PaymentMethod
 import com.jfb.orderops.payment.domain.usecase.PayOrderUseCase
 import com.jfb.orderops.payment.presentation.pay.PaymentScreen
 import com.jfb.orderops.payment.presentation.pay.PaymentViewModel
 import com.jfb.orderops.payment.presentation.pay.PaymentViewModelFactory
-import com.jfb.orderops.product.data.repository.ProductRepositoryImpl
-import com.jfb.orderops.product.domain.usecase.ListProductsUseCase
 import com.jfb.orderops.receipt.presentation.ReceiptBitmapRenderer
 import com.jfb.orderops.receipt.presentation.ReceiptScreen
 import com.jfb.orderops.receipt.presentation.ReceiptViewModel
@@ -136,7 +121,17 @@ fun AppNavHost(
             )
         }
 
-        productRoutes(
+        productGraph(
+            navController = navController,
+            sessionStorage = sessionStorage
+        )
+
+        categoryGraph(
+            navController = navController,
+            sessionStorage = sessionStorage
+        )
+
+        orderGraph(
             navController = navController,
             sessionStorage = sessionStorage
         )
@@ -160,72 +155,6 @@ fun AppNavHost(
                     viewModel.create {
                         navController.popBackStack()
                     }
-                },
-                onBack = {
-                    navController.popBackStack()
-                }
-            )
-        }
-
-        composable(
-            route = AppRoute.CreateOrder.route,
-            arguments = listOf(
-                navArgument("serviceTableId") {
-                    type = NavType.LongType
-                }
-            )
-        ) { backStackEntry ->
-            val serviceTableId = backStackEntry.arguments
-                ?.getLong("serviceTableId")
-                ?: return@composable
-
-            val orderApi = RetrofitClient.createOrderApi(sessionStorage)
-            val orderRepository = OrderRepositoryImpl(orderApi)
-            val createOrderUseCase = CreateOrderUseCase(orderRepository)
-
-            val productApi = RetrofitClient.createProductApi(sessionStorage)
-            val productRepository = ProductRepositoryImpl(productApi)
-            val listProductsUseCase = ListProductsUseCase(productRepository)
-
-            val categoryApi = RetrofitClient.createCategoryApi(sessionStorage)
-            val categoryRepository = CategoryRepositoryImpl(categoryApi)
-            val listCategoriesUseCase = ListCategoriesUseCase(categoryRepository)
-
-            val createOrderViewModel: CreateOrderViewModel = viewModel(
-                factory = CreateOrderViewModelFactory(
-                    serviceTableId = serviceTableId,
-                    listProductsUseCase = listProductsUseCase,
-                    listCategoriesUseCase = listCategoriesUseCase,
-                    createOrderUseCase = createOrderUseCase
-                )
-            )
-
-            val createOrderUiState = createOrderViewModel.uiState.collectAsState().value
-
-            LaunchedEffect(serviceTableId) {
-                createOrderViewModel.loadData()
-            }
-
-            CreateOrderScreen(
-                uiState = createOrderUiState,
-                onCategorySelected = createOrderViewModel::onCategorySelected,
-                onAddProduct = { productId ->
-                    createOrderViewModel.onProductSelected(productId)
-                    createOrderViewModel.addSelectedProduct()
-                },
-                onRemoveProduct = createOrderViewModel::removeProduct,
-                onCreateOrder = {
-                    createOrderViewModel.createOrder(
-                        onSuccess = { orderId ->
-                            navController.navigate(
-                                AppRoute.OrderDetail.createRoute(orderId)
-                            ) {
-                                popUpTo(AppRoute.CreateOrder.route) {
-                                    inclusive = true
-                                }
-                            }
-                        }
-                    )
                 },
                 onBack = {
                     navController.popBackStack()
@@ -379,78 +308,6 @@ fun AppNavHost(
                     }
                 )
             }
-        }
-
-        composable(
-            route = AppRoute.OrderDetail.route,
-            arguments = listOf(
-                navArgument("orderId") {
-                    type = NavType.LongType
-                }
-            )
-        ) { backStackEntry ->
-            val orderId = backStackEntry.arguments
-                ?.getLong("orderId")
-                ?: return@composable
-
-            val orderApi = RetrofitClient.createOrderApi(sessionStorage)
-            val orderRepository = OrderRepositoryImpl(orderApi)
-
-            val productApi = RetrofitClient.createProductApi(sessionStorage)
-            val productRepository = ProductRepositoryImpl(productApi)
-
-            val getOrderByIdUseCase = GetOrderByIdUseCase(orderRepository)
-            val sendToPreparationUseCase = SendOrderToPreparationUseCase(orderRepository)
-            val markAsReadyUseCase = MarkOrderAsReadyUseCase(orderRepository)
-            val finishOrderUseCase = FinishOrderUseCase(orderRepository)
-            val cancelOrderUseCase = CancelOrderUseCase(orderRepository)
-
-            val addOrderItemUseCase = AddOrderItemUseCase(orderRepository)
-            val removeOrderItemUseCase = RemoveOrderItemUseCase(orderRepository)
-
-            val listProductsUseCase = ListProductsUseCase(productRepository)
-
-            val orderDetailViewModel: OrderDetailViewModel = viewModel(
-                factory = OrderDetailViewModelFactory(
-                    orderId = orderId,
-                    getOrderByIdUseCase = getOrderByIdUseCase,
-                    sendToPreparationUseCase = sendToPreparationUseCase,
-                    markAsReadyUseCase = markAsReadyUseCase,
-                    finishOrderUseCase = finishOrderUseCase,
-                    cancelOrderUseCase = cancelOrderUseCase,
-                    addOrderItemUseCase = addOrderItemUseCase,
-                    removeOrderItemUseCase = removeOrderItemUseCase,
-                    listProductsUseCase = listProductsUseCase
-                )
-            )
-
-            val uiState = orderDetailViewModel.uiState.collectAsState().value
-
-            LaunchedEffect(orderId) {
-                orderDetailViewModel.loadAll()
-            }
-
-            OrderDetailScreen(
-                uiState = uiState,
-                onRefresh = orderDetailViewModel::loadAll,
-                onBack = { navController.popBackStack() },
-                onSendToPreparation = orderDetailViewModel::sendToPreparation,
-                onMarkAsReady = orderDetailViewModel::markAsReady,
-                events = orderDetailViewModel.events,
-                onFinish = orderDetailViewModel::finish,
-                onCancel = orderDetailViewModel::cancel,
-                onGoToPayment = { id, amount ->
-                    navController.navigate(
-                        AppRoute.Payment.createRoute(id, amount)
-                    )
-                },
-                onAddItem = { productId, qty ->
-                    orderDetailViewModel.addItem(productId, qty)
-                },
-                onRemoveItem = { itemId ->
-                    orderDetailViewModel.removeItem(itemId)
-                }
-            )
         }
     }
 }
