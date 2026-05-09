@@ -13,6 +13,11 @@ import com.jfb.orderops.category.presentation.create.CreateCategoryViewModelFact
 import com.jfb.orderops.core.navigation.AppRoute
 import com.jfb.orderops.core.network.RetrofitClient
 import com.jfb.orderops.core.storage.SessionStorage
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.jfb.orderops.category.domain.usecase.ListCategoriesUseCase
+import com.jfb.orderops.category.presentation.list.CategoriesScreen
+import com.jfb.orderops.category.presentation.list.CategoriesViewModel
+import com.jfb.orderops.category.presentation.list.CategoriesViewModelFactory
 
 fun NavGraphBuilder.categoryGraph(
     navController: NavHostController,
@@ -46,6 +51,40 @@ fun NavGraphBuilder.categoryGraph(
                 viewModel.create {
                     navController.popBackStack()
                 }
+            },
+            onBack = {
+                navController.popBackStack()
+            }
+        )
+    }
+
+    composable(AppRoute.Categories.route) {
+
+        val categoryApi =
+            RetrofitClient.createCategoryApi(sessionStorage)
+
+        val categoryRepository =
+            CategoryRepositoryImpl(categoryApi)
+
+        val listCategoriesUseCase =
+            ListCategoriesUseCase(categoryRepository)
+
+        val viewModel: CategoriesViewModel = viewModel(
+            factory = CategoriesViewModelFactory(
+                listCategoriesUseCase
+            )
+        )
+
+        val uiState =
+            viewModel.uiState.collectAsState().value
+
+        CategoriesScreen(
+            uiState = uiState,
+            onRefresh = viewModel::loadCategories,
+            onCreateCategory = {
+                navController.navigate(
+                    AppRoute.CreateCategory.route
+                )
             },
             onBack = {
                 navController.popBackStack()

@@ -15,7 +15,8 @@ fun ProductsScreen(
     uiState: ProductsUiState,
     onRefresh: () -> Unit,
     onCreateProduct: () -> Unit,
-    onCreateCategory: () -> Unit
+    onCreateCategory: () -> Unit,
+    onOpenCategories: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -42,6 +43,16 @@ fun ProductsScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Nova categoria")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedButton(
+            onClick = onOpenCategories,
+            enabled = !uiState.isLoading,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Ver categorias")
         }
 
         Spacer(modifier = Modifier.height(8.dp))

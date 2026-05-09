@@ -218,6 +218,9 @@ fun DashboardScreen(
                         },
                         onCreateCategory = {
                             navController.navigate(AppRoute.CreateCategory.route)
+                        },
+                        onOpenCategories = {
+                            navController.navigate(AppRoute.Categories.route)
                         }
                     )
                 }

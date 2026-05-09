@@ -12,6 +12,8 @@ sealed class AppRoute(
 
     data object CreateCategory : AppRoute("create-category")
 
+    data object Categories : AppRoute("categories")
+
     data object CreateServiceTable : AppRoute("create-service-table")
 
     data object CreateOrder : AppRoute("create-order/{serviceTableId}") {
