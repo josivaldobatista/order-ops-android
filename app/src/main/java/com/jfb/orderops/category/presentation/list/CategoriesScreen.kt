@@ -14,6 +14,10 @@ fun CategoriesScreen(
     uiState: CategoriesUiState,
     onRefresh: () -> Unit,
     onCreateCategory: () -> Unit,
+    onCategoryClick: (Category) -> Unit,
+    onEditNameChange: (String) -> Unit,
+    onUpdateCategory: () -> Unit,
+    onDismissDialog: () -> Unit,
     onBack: () -> Unit
 ) {
     Column(
@@ -71,11 +75,58 @@ fun CategoriesScreen(
             Spacer(Modifier.height(8.dp))
         }
 
+        if (uiState.isEditDialogVisible) {
+
+            AlertDialog(
+                onDismissRequest = onDismissDialog,
+
+                title = {
+                    Text("Editar categoria")
+                },
+
+                text = {
+
+                    OutlinedTextField(
+                        value = uiState.editName,
+                        onValueChange = onEditNameChange,
+                        label = {
+                            Text("Nome")
+                        },
+                        singleLine = true
+                    )
+                },
+
+                confirmButton = {
+
+                    Button(
+                        onClick = onUpdateCategory,
+                        enabled = !uiState.isLoading
+                    ) {
+                        Text("Salvar")
+                    }
+                },
+
+                dismissButton = {
+
+                    OutlinedButton(
+                        onClick = onDismissDialog
+                    ) {
+                        Text("Cancelar")
+                    }
+                }
+            )
+        }
+
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(uiState.categories) { category ->
-                CategoryCard(category = category)
+                CategoryCard(
+                    category = category,
+                    onClick = {
+                        onCategoryClick(category)
+                    }
+                )
             }
         }
     }
@@ -83,10 +134,12 @@ fun CategoriesScreen(
 
 @Composable
 private fun CategoryCard(
-    category: Category
+    category: Category,
+    onClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onClick
     ) {
         Column(
             modifier = Modifier.padding(16.dp)

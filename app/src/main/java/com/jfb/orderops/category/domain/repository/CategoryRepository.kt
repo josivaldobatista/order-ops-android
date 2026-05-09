@@ -10,4 +10,9 @@ interface CategoryRepository {
     suspend fun create(
         name: String
     ): AppResult<Category>
+
+    suspend fun update(
+        id: Long,
+        name: String
+    ): AppResult<Category>
 }

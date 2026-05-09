@@ -1,6 +1,7 @@
 package com.jfb.orderops.category.data.repository
 
 import com.jfb.orderops.category.data.dto.CreateCategoryRequest
+import com.jfb.orderops.category.data.dto.UpdateCategoryRequest
 import com.jfb.orderops.category.data.dto.toDomain
 import com.jfb.orderops.category.data.remote.CategoryApi
 import com.jfb.orderops.category.domain.model.Category
@@ -44,6 +45,27 @@ class CategoryRepositoryImpl(
 
             AppResult.Error(
                 message = e.message ?: "Erro ao criar categoria.",
+                throwable = e
+            )
+        }
+    }
+
+    override suspend fun update(
+        id: Long,
+        name: String
+    ): AppResult<Category> {
+        return try {
+            val category = api.update(
+                id = id,
+                request = UpdateCategoryRequest(
+                    name = name
+                )
+            ).toDomain()
+
+            AppResult.Success(category)
+        } catch (e: Exception) {
+            AppResult.Error(
+                message = e.message ?: "Erro ao atualizar categoria.",
                 throwable = e
             )
         }
