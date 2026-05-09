@@ -69,6 +69,12 @@ fun AppNavHost(
 ) {
     val authApi = RetrofitClient.createAuthApi(sessionStorage)
 
+    val categoryApi = RetrofitClient.createCategoryApi(sessionStorage)
+
+    val categoryRepository = CategoryRepositoryImpl(categoryApi)
+
+    val listCategoriesUseCase = ListCategoriesUseCase(categoryRepository)
+
     val authRepository = AuthRepositoryImpl(
         api = authApi,
         sessionStorage = sessionStorage
@@ -145,7 +151,10 @@ fun AppNavHost(
             val createProductUseCase = CreateProductUseCase(productRepository)
 
             val createProductViewModel: CreateProductViewModel = viewModel(
-                factory = CreateProductViewModelFactory(createProductUseCase)
+                factory = CreateProductViewModelFactory(
+                    createProductUseCase,
+                    listCategoriesUseCase
+                )
             )
 
             val uiState = createProductViewModel.uiState.collectAsState().value
@@ -155,6 +164,7 @@ fun AppNavHost(
                 onNameChange = createProductViewModel::onNameChange,
                 onDescriptionChange = createProductViewModel::onDescriptionChange,
                 onPriceChange = createProductViewModel::onPriceChange,
+                onCategorySelected = createProductViewModel::onCategorySelected,
                 onCreate = {
                     createProductViewModel.create {
                         navController.popBackStack()

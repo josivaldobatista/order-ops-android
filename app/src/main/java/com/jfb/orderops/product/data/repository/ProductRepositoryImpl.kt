@@ -6,6 +6,7 @@ import com.jfb.orderops.product.data.dto.toDomain
 import com.jfb.orderops.product.data.remote.ProductApi
 import com.jfb.orderops.product.domain.model.Product
 import com.jfb.orderops.product.domain.repository.ProductRepository
+import java.math.BigDecimal
 
 class ProductRepositoryImpl(
     private val api: ProductApi
@@ -26,14 +27,18 @@ class ProductRepositoryImpl(
     override suspend fun create(
         name: String,
         description: String?,
-        price: Double
+        price: BigDecimal,
+        categoryId: Long?,
+        active: Boolean
     ): AppResult<Product> {
         return try {
             val product = api.create(
                 CreateProductRequest(
                     name = name,
                     description = description,
-                    price = price
+                    price = price,
+                    categoryId = categoryId,
+                    active = active
                 )
             ).toDomain()
 

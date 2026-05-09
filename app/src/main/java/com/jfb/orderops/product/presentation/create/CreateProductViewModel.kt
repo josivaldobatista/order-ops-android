@@ -2,6 +2,7 @@ package com.jfb.orderops.product.presentation.create
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.jfb.orderops.category.domain.usecase.ListCategoriesUseCase
 import com.jfb.orderops.core.result.AppResult
 import com.jfb.orderops.product.domain.usecase.CreateProductUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,8 +12,19 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class CreateProductViewModel(
-    private val createProductUseCase: CreateProductUseCase
+    private val createProductUseCase: CreateProductUseCase,
+    private val listCategoriesUseCase: ListCategoriesUseCase
 ) : ViewModel() {
+
+    init {
+        loadCategories()
+    }
+
+    fun onCategorySelected(categoryId: Long?) {
+        _uiState.update {
+            it.copy(selectedCategoryId = categoryId)
+        }
+    }
 
     private val _uiState = MutableStateFlow(CreateProductUiState())
     val uiState: StateFlow<CreateProductUiState> = _uiState.asStateFlow()
@@ -32,7 +44,7 @@ class CreateProductViewModel(
     fun create(onSuccess: () -> Unit) {
         val state = _uiState.value
 
-        val price = state.price.toDoubleOrNull()
+        val price = state.price.toBigDecimalOrNull()
 
         if (price == null) {
             _uiState.update {
@@ -50,7 +62,9 @@ class CreateProductViewModel(
                 val result = createProductUseCase.execute(
                     name = state.name,
                     description = state.description,
-                    price = price
+                    price = price,
+                    categoryId = state.selectedCategoryId,
+                    active = state.active
                 )
             ) {
                 is AppResult.Success -> {
@@ -70,6 +84,34 @@ class CreateProductViewModel(
                 }
 
                 AppResult.Loading -> Unit
+            }
+        }
+    }
+
+    private fun loadCategories() {
+        viewModelScope.launch {
+
+            when (val result = listCategoriesUseCase.execute()) {
+
+                is AppResult.Success -> {
+                    _uiState.update {
+                        it.copy(categories = result.data)
+                    }
+                }
+
+                is AppResult.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            errorMessage = result.message
+                        )
+                    }
+                }
+
+                is AppResult.Loading -> {
+                    _uiState.update {
+                        it.copy(isLoading = true)
+                    }
+                }
             }
         }
     }
