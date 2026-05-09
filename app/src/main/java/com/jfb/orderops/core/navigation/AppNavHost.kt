@@ -16,7 +16,11 @@ import com.jfb.orderops.auth.presentation.login.LoginScreen
 import com.jfb.orderops.auth.presentation.login.LoginViewModel
 import com.jfb.orderops.auth.presentation.login.LoginViewModelFactory
 import com.jfb.orderops.category.data.repository.CategoryRepositoryImpl
+import com.jfb.orderops.category.domain.usecase.CreateCategoryUseCase
 import com.jfb.orderops.category.domain.usecase.ListCategoriesUseCase
+import com.jfb.orderops.category.presentation.create.CreateCategoryScreen
+import com.jfb.orderops.category.presentation.create.CreateCategoryViewModel
+import com.jfb.orderops.category.presentation.create.CreateCategoryViewModelFactory
 import com.jfb.orderops.company.data.repository.CompanyRepositoryImpl
 import com.jfb.orderops.company.domain.usecase.GetCompanyByIdUseCase
 import com.jfb.orderops.core.auth.AuthSessionEvent
@@ -74,6 +78,9 @@ fun AppNavHost(
     val categoryRepository = CategoryRepositoryImpl(categoryApi)
 
     val listCategoriesUseCase = ListCategoriesUseCase(categoryRepository)
+
+    val createCategoryUseCase =
+        CreateCategoryUseCase(categoryRepository)
 
     val authRepository = AuthRepositoryImpl(
         api = authApi,
@@ -167,6 +174,30 @@ fun AppNavHost(
                 onCategorySelected = createProductViewModel::onCategorySelected,
                 onCreate = {
                     createProductViewModel.create {
+                        navController.popBackStack()
+                    }
+                },
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(AppRoute.CreateCategory.route) {
+
+            val viewModel: CreateCategoryViewModel = viewModel(
+                factory = CreateCategoryViewModelFactory(
+                    createCategoryUseCase
+                )
+            )
+
+            val uiState = viewModel.uiState.collectAsState().value
+
+            CreateCategoryScreen(
+                uiState = uiState,
+                onNameChange = viewModel::onNameChange,
+                onCreate = {
+                    viewModel.create {
                         navController.popBackStack()
                     }
                 },

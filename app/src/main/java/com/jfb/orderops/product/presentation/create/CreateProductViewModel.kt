@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.math.BigDecimal
 
 class CreateProductViewModel(
     private val createProductUseCase: CreateProductUseCase,
@@ -43,6 +44,7 @@ class CreateProductViewModel(
 
     fun create(onSuccess: () -> Unit) {
         val state = _uiState.value
+
 
         val price = state.price.toBigDecimalOrNull()
 

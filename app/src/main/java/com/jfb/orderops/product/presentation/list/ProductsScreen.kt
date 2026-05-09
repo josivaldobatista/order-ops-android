@@ -13,7 +13,9 @@ import com.jfb.orderops.product.presentation.state.ProductsUiState
 @Composable
 fun ProductsScreen(
     uiState: ProductsUiState,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    onCreateProduct: () -> Unit,
+    onCreateCategory: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -23,6 +25,26 @@ fun ProductsScreen(
         Text("Produtos", style = MaterialTheme.typography.headlineMedium)
 
         Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = onCreateProduct,
+            enabled = !uiState.isLoading,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Novo produto")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedButton(
+            onClick = onCreateCategory,
+            enabled = !uiState.isLoading,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Nova categoria")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         Button(
             onClick = onRefresh,
@@ -55,10 +77,17 @@ private fun ProductCard(product: Product) {
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
             Text(product.name, style = MaterialTheme.typography.titleMedium)
+
+            product.categoryName?.let {
+                Spacer(Modifier.height(4.dp))
+                Text("Categoria: $it")
+            }
+
             product.description?.let {
                 Spacer(Modifier.height(4.dp))
                 Text(it)
             }
+
             Spacer(Modifier.height(8.dp))
             Text("Preço: R$ ${"%.2f".format(product.price)}")
             Text(if (product.active) "Ativo" else "Inativo")

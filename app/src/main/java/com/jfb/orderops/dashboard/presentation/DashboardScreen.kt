@@ -45,6 +45,7 @@ import com.jfb.orderops.product.domain.usecase.ListProductsUseCase
 import com.jfb.orderops.product.presentation.list.ProductsScreen
 import com.jfb.orderops.product.presentation.list.ProductsViewModel
 import com.jfb.orderops.product.presentation.list.ProductsViewModelFactory
+import com.jfb.orderops.product.presentation.state.ProductsUiState
 import com.jfb.orderops.serviceTable.data.repository.ServiceTableRepositoryImpl
 import com.jfb.orderops.serviceTable.domain.usecase.ListServiceTablesUseCase
 import com.jfb.orderops.serviceTable.presentation.list.ServiceTablesScreen
@@ -208,20 +209,16 @@ fun DashboardScreen(
                 2 -> Column(
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    Button(
-                        onClick = {
-                            navController.navigate(AppRoute.CreateProduct.route)
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                    ) {
-                        Text("Novo produto")
-                    }
 
                     ProductsScreen(
                         uiState = productsUiState,
-                        onRefresh = productsViewModel::loadProducts
+                        onRefresh = productsViewModel::loadProducts,
+                        onCreateProduct = {
+                            navController.navigate(AppRoute.CreateProduct.route)
+                        },
+                        onCreateCategory = {
+                            navController.navigate(AppRoute.CreateCategory.route)
+                        }
                     )
                 }
 

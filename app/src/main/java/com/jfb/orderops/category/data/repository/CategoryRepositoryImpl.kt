@@ -1,5 +1,6 @@
 package com.jfb.orderops.category.data.repository
 
+import com.jfb.orderops.category.data.dto.CreateCategoryRequest
 import com.jfb.orderops.category.data.dto.toDomain
 import com.jfb.orderops.category.data.remote.CategoryApi
 import com.jfb.orderops.category.domain.model.Category
@@ -20,6 +21,29 @@ class CategoryRepositoryImpl(
         } catch (e: Exception) {
             AppResult.Error(
                 message = e.message ?: "Erro ao carregar categorias.",
+                throwable = e
+            )
+        }
+    }
+
+    override suspend fun create(
+        name: String
+    ): AppResult<Category> {
+
+        return try {
+
+            val category = api.create(
+                CreateCategoryRequest(
+                    name = name
+                )
+            ).toDomain()
+
+            AppResult.Success(category)
+
+        } catch (e: Exception) {
+
+            AppResult.Error(
+                message = e.message ?: "Erro ao criar categoria.",
                 throwable = e
             )
         }

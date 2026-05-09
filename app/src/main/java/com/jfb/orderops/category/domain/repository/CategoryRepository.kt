@@ -6,4 +6,8 @@ import com.jfb.orderops.core.result.AppResult
 interface CategoryRepository {
 
     suspend fun list(): AppResult<List<Category>>
+
+    suspend fun create(
+        name: String
+    ): AppResult<Category>
 }
