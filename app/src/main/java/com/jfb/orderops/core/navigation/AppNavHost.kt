@@ -16,15 +16,12 @@ import com.jfb.orderops.auth.presentation.login.LoginScreen
 import com.jfb.orderops.auth.presentation.login.LoginViewModel
 import com.jfb.orderops.auth.presentation.login.LoginViewModelFactory
 import com.jfb.orderops.category.data.repository.CategoryRepositoryImpl
-import com.jfb.orderops.category.domain.usecase.CreateCategoryUseCase
 import com.jfb.orderops.category.domain.usecase.ListCategoriesUseCase
-import com.jfb.orderops.category.presentation.create.CreateCategoryScreen
-import com.jfb.orderops.category.presentation.create.CreateCategoryViewModel
-import com.jfb.orderops.category.presentation.create.CreateCategoryViewModelFactory
 import com.jfb.orderops.company.data.repository.CompanyRepositoryImpl
 import com.jfb.orderops.company.domain.usecase.GetCompanyByIdUseCase
 import com.jfb.orderops.core.auth.AuthSessionEvent
 import com.jfb.orderops.core.auth.AuthSessionEventBus
+import com.jfb.orderops.core.navigation.graph.productRoutes
 import com.jfb.orderops.core.network.RetrofitClient
 import com.jfb.orderops.core.storage.SessionStorage
 import com.jfb.orderops.core.util.ShareImageUtils
@@ -51,11 +48,7 @@ import com.jfb.orderops.payment.presentation.pay.PaymentScreen
 import com.jfb.orderops.payment.presentation.pay.PaymentViewModel
 import com.jfb.orderops.payment.presentation.pay.PaymentViewModelFactory
 import com.jfb.orderops.product.data.repository.ProductRepositoryImpl
-import com.jfb.orderops.product.domain.usecase.CreateProductUseCase
 import com.jfb.orderops.product.domain.usecase.ListProductsUseCase
-import com.jfb.orderops.product.presentation.create.CreateProductScreen
-import com.jfb.orderops.product.presentation.create.CreateProductViewModel
-import com.jfb.orderops.product.presentation.create.CreateProductViewModelFactory
 import com.jfb.orderops.receipt.presentation.ReceiptBitmapRenderer
 import com.jfb.orderops.receipt.presentation.ReceiptScreen
 import com.jfb.orderops.receipt.presentation.ReceiptViewModel
@@ -72,15 +65,6 @@ fun AppNavHost(
     sessionStorage: SessionStorage
 ) {
     val authApi = RetrofitClient.createAuthApi(sessionStorage)
-
-    val categoryApi = RetrofitClient.createCategoryApi(sessionStorage)
-
-    val categoryRepository = CategoryRepositoryImpl(categoryApi)
-
-    val listCategoriesUseCase = ListCategoriesUseCase(categoryRepository)
-
-    val createCategoryUseCase =
-        CreateCategoryUseCase(categoryRepository)
 
     val authRepository = AuthRepositoryImpl(
         api = authApi,
@@ -152,60 +136,10 @@ fun AppNavHost(
             )
         }
 
-        composable(AppRoute.CreateProduct.route) {
-            val productApi = RetrofitClient.createProductApi(sessionStorage)
-            val productRepository = ProductRepositoryImpl(productApi)
-            val createProductUseCase = CreateProductUseCase(productRepository)
-
-            val createProductViewModel: CreateProductViewModel = viewModel(
-                factory = CreateProductViewModelFactory(
-                    createProductUseCase,
-                    listCategoriesUseCase
-                )
-            )
-
-            val uiState = createProductViewModel.uiState.collectAsState().value
-
-            CreateProductScreen(
-                uiState = uiState,
-                onNameChange = createProductViewModel::onNameChange,
-                onDescriptionChange = createProductViewModel::onDescriptionChange,
-                onPriceChange = createProductViewModel::onPriceChange,
-                onCategorySelected = createProductViewModel::onCategorySelected,
-                onCreate = {
-                    createProductViewModel.create {
-                        navController.popBackStack()
-                    }
-                },
-                onBack = {
-                    navController.popBackStack()
-                }
-            )
-        }
-
-        composable(AppRoute.CreateCategory.route) {
-
-            val viewModel: CreateCategoryViewModel = viewModel(
-                factory = CreateCategoryViewModelFactory(
-                    createCategoryUseCase
-                )
-            )
-
-            val uiState = viewModel.uiState.collectAsState().value
-
-            CreateCategoryScreen(
-                uiState = uiState,
-                onNameChange = viewModel::onNameChange,
-                onCreate = {
-                    viewModel.create {
-                        navController.popBackStack()
-                    }
-                },
-                onBack = {
-                    navController.popBackStack()
-                }
-            )
-        }
+        productRoutes(
+            navController = navController,
+            sessionStorage = sessionStorage
+        )
 
         composable(AppRoute.CreateServiceTable.route) {
             val serviceTableApi = RetrofitClient.createServiceTableApi(sessionStorage)
