@@ -2,7 +2,8 @@ package com.jfb.orderops.order.domain.model
 
 data class Order(
     val id: Long,
-    val serviceTableId: Long,
+    val serviceTableId: Long?,
+    val fulfillmentType: OrderFulfillmentType,
     val status: OrderStatus,
     val totalAmount: Double,
     val items: List<OrderItem>
@@ -24,4 +25,13 @@ enum class OrderStatus {
     FINISHED,
     CANCELLED,
     UNKNOWN
+}
+
+enum class OrderFulfillmentType(
+    val label: String
+) {
+    DINE_IN("Comer no local"),
+    TAKEOUT("Retirada"),
+    DELIVERY("Entrega"),
+    UNKNOWN("Desconhecido")
 }

@@ -23,12 +23,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.jfb.orderops.order.domain.model.OrderFulfillmentType
 import com.jfb.orderops.order.presentation.state.CreateOrderItemUiState
 import com.jfb.orderops.order.presentation.state.CreateOrderUiState
 
 @Composable
 fun CreateOrderScreen(
     uiState: CreateOrderUiState,
+    onFulfillmentTypeSelected: (OrderFulfillmentType) -> Unit,
     onCategorySelected: (Long?) -> Unit,
     onAddProduct: (Long) -> Unit,
     onRemoveProduct: (Long) -> Unit,
@@ -64,6 +66,31 @@ fun CreateOrderScreen(
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onBackground
             )
+
+            Spacer(Modifier.height(24.dp))
+
+            Text(
+                text = "Tipo de atendimento",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OrderFulfillmentType.entries
+                    .filter { it != OrderFulfillmentType.UNKNOWN }
+                    .forEach { type ->
+                        FilterChip(
+                            selected = uiState.fulfillmentType == type,
+                            onClick = { onFulfillmentTypeSelected(type) },
+                            label = { Text(type.label) }
+                        )
+                    }
+            }
 
             Spacer(Modifier.height(24.dp))
 

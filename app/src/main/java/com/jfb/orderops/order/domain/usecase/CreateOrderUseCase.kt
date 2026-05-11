@@ -3,6 +3,7 @@ package com.jfb.orderops.order.domain.usecase
 import com.jfb.orderops.core.result.AppResult
 import com.jfb.orderops.order.domain.model.CreateOrderItem
 import com.jfb.orderops.order.domain.model.Order
+import com.jfb.orderops.order.domain.model.OrderFulfillmentType
 import com.jfb.orderops.order.domain.repository.OrderRepository
 
 class CreateOrderUseCase(
@@ -10,10 +11,11 @@ class CreateOrderUseCase(
 ) {
 
     suspend fun execute(
-        serviceTableId: Long,
+        serviceTableId: Long?,
+        fulfillmentType: OrderFulfillmentType,
         items: List<CreateOrderItem>
     ): AppResult<Order> {
-        if (serviceTableId <= 0) {
+        if (fulfillmentType == OrderFulfillmentType.DINE_IN && (serviceTableId == null || serviceTableId <= 0)) {
             return AppResult.Error("Mesa inválida.")
         }
 
@@ -27,6 +29,7 @@ class CreateOrderUseCase(
 
         return repository.create(
             serviceTableId = serviceTableId,
+            fulfillmentType = fulfillmentType,
             items = items
         )
     }

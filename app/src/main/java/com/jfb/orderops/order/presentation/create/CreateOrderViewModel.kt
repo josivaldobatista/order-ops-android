@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jfb.orderops.category.domain.usecase.ListCategoriesUseCase
 import com.jfb.orderops.core.result.AppResult
+import com.jfb.orderops.order.domain.model.CreateOrderItem
+import com.jfb.orderops.order.domain.model.OrderFulfillmentType
 import com.jfb.orderops.order.domain.usecase.CreateOrderUseCase
 import com.jfb.orderops.order.presentation.state.CreateOrderItemUiState
 import com.jfb.orderops.order.presentation.state.CreateOrderUiState
@@ -22,9 +24,15 @@ class CreateOrderViewModel(
     private val createOrderUseCase: CreateOrderUseCase
 ) : ViewModel() {
 
+    private val originalServiceTableId: Long? = serviceTableId.takeIf { it > 0 }
+
     private val _uiState = MutableStateFlow(
-        CreateOrderUiState(serviceTableId = serviceTableId)
+        CreateOrderUiState(
+            serviceTableId = originalServiceTableId,
+            fulfillmentType = OrderFulfillmentType.DINE_IN
+        )
     )
+
     val uiState: StateFlow<CreateOrderUiState> = _uiState.asStateFlow()
 
     fun loadData() {
@@ -60,6 +68,21 @@ class CreateOrderViewModel(
                     errorMessage = "Erro ao carregar produtos e categorias."
                 )
             }
+        }
+    }
+
+    fun onFulfillmentTypeSelected(type: OrderFulfillmentType) {
+        _uiState.update { state ->
+            state.copy(
+                fulfillmentType = type,
+                serviceTableId = when (type) {
+                    OrderFulfillmentType.DINE_IN -> originalServiceTableId
+                    OrderFulfillmentType.TAKEOUT,
+                    OrderFulfillmentType.DELIVERY,
+                    OrderFulfillmentType.UNKNOWN -> null
+                },
+                errorMessage = null
+            )
         }
     }
 
@@ -148,22 +171,30 @@ class CreateOrderViewModel(
             return
         }
 
+        if (state.fulfillmentType == OrderFulfillmentType.DINE_IN && state.serviceTableId == null) {
+            _uiState.update {
+                it.copy(errorMessage = "Mesa inválida para pedido no local.")
+            }
+            return
+        }
+
         viewModelScope.launch {
             _uiState.update {
                 it.copy(isLoading = true, errorMessage = null)
             }
 
-            when (
-                val result = createOrderUseCase.execute(
-                    serviceTableId = state.serviceTableId,
-                    items = state.items.map {
-                        com.jfb.orderops.order.domain.model.CreateOrderItem(
-                            productId = it.productId,
-                            quantity = it.quantity
-                        )
-                    }
-                )
-            ) {
+            val result = createOrderUseCase.execute(
+                serviceTableId = state.serviceTableId,
+                fulfillmentType = state.fulfillmentType,
+                items = state.items.map {
+                    CreateOrderItem(
+                        productId = it.productId,
+                        quantity = it.quantity
+                    )
+                }
+            )
+
+            when (result) {
                 is AppResult.Success -> {
                     _uiState.update {
                         it.copy(isLoading = false)

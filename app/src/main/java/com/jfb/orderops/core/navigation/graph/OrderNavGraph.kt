@@ -77,6 +77,7 @@ fun NavGraphBuilder.orderGraph(
 
         CreateOrderScreen(
             uiState = uiState,
+            onFulfillmentTypeSelected = viewModel::onFulfillmentTypeSelected,
             onCategorySelected = viewModel::onCategorySelected,
             onAddProduct = { productId ->
                 viewModel.onProductSelected(productId)

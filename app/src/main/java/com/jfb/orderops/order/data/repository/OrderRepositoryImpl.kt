@@ -8,6 +8,7 @@ import com.jfb.orderops.order.data.dto.toDomain
 import com.jfb.orderops.order.data.remote.OrderApi
 import com.jfb.orderops.order.domain.model.CreateOrderItem
 import com.jfb.orderops.order.domain.model.Order
+import com.jfb.orderops.order.domain.model.OrderFulfillmentType
 import com.jfb.orderops.order.domain.model.OrderStatus
 import com.jfb.orderops.order.domain.repository.OrderRepository
 import retrofit2.HttpException
@@ -32,12 +33,14 @@ class OrderRepositoryImpl(
     }
 
     override suspend fun create(
-        serviceTableId: Long,
+        serviceTableId: Long?,
+        fulfillmentType: OrderFulfillmentType,
         items: List<CreateOrderItem>
     ): AppResult<Order> {
         return try {
             val request = CreateOrderRequest(
                 serviceTableId = serviceTableId,
+                fulfillmentType = fulfillmentType.name,
                 items = items.map {
                     CreateOrderItemRequest(
                         productId = it.productId,

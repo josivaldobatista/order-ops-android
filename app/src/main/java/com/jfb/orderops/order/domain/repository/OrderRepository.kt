@@ -3,6 +3,7 @@ package com.jfb.orderops.order.domain.repository
 import com.jfb.orderops.core.result.AppResult
 import com.jfb.orderops.order.domain.model.CreateOrderItem
 import com.jfb.orderops.order.domain.model.Order
+import com.jfb.orderops.order.domain.model.OrderFulfillmentType
 import com.jfb.orderops.order.domain.model.OrderStatus
 
 interface OrderRepository {
@@ -10,7 +11,8 @@ interface OrderRepository {
     suspend fun list(status: OrderStatus? = null): AppResult<List<Order>>
 
     suspend fun create(
-        serviceTableId: Long,
+        serviceTableId: Long?,
+        fulfillmentType: OrderFulfillmentType,
         items: List<CreateOrderItem>
     ): AppResult<Order>
 
