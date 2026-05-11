@@ -40,6 +40,7 @@ import com.jfb.orderops.order.domain.model.OrderStatus
 import com.jfb.orderops.order.presentation.state.OrderDetailUiState
 import com.jfb.orderops.product.domain.model.Product
 import kotlinx.coroutines.flow.Flow
+import com.jfb.orderops.order.domain.model.OrderFulfillmentType
 
 @Composable
 fun OrderDetailScreen(
@@ -157,11 +158,24 @@ private fun OrderDetailContent(
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            Text("Mesa: ${order.serviceTableId}")
+            Text(
+                text = "Atendimento: ${order.fulfillmentType.toReadableText()}",
+                color = order.fulfillmentType.toColor()
+            )
+
+            Spacer(Modifier.height(4.dp))
+
+            if (order.serviceTableId != null) {
+                Text("Mesa: ${order.serviceTableId}")
+            } else {
+                Text("Mesa: -")
+            }
+
             Text(
                 text = "Status: ${order.status.toReadableText()}",
                 color = order.status.toColor()
             )
+
             Text("Total: R$ ${"%.2f".format(order.totalAmount)}")
         }
     }
@@ -470,5 +484,23 @@ private fun OrderStatus.toReadableText(): String {
         OrderStatus.FINISHED -> "Finalizado"
         OrderStatus.CANCELLED -> "Cancelado"
         OrderStatus.UNKNOWN -> "Desconhecido"
+    }
+}
+
+private fun OrderFulfillmentType.toReadableText(): String {
+    return when (this) {
+        OrderFulfillmentType.DINE_IN -> "Comer no local"
+        OrderFulfillmentType.TAKEOUT -> "Retirada"
+        OrderFulfillmentType.DELIVERY -> "Entrega"
+        OrderFulfillmentType.UNKNOWN -> "Desconhecido"
+    }
+}
+
+private fun OrderFulfillmentType.toColor(): Color {
+    return when (this) {
+        OrderFulfillmentType.DINE_IN -> Color(0xFF4CAF50)
+        OrderFulfillmentType.TAKEOUT -> Color(0xFFFF9800)
+        OrderFulfillmentType.DELIVERY -> Color(0xFF2196F3)
+        OrderFulfillmentType.UNKNOWN -> Color.DarkGray
     }
 }

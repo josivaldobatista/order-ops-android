@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.dp
 import com.jfb.orderops.order.domain.model.Order
 import com.jfb.orderops.order.domain.model.OrderStatus
 import com.jfb.orderops.order.presentation.state.OrdersUiState
+import com.jfb.orderops.order.domain.model.OrderFulfillmentType
 
 @Composable
 fun OrdersScreen(
@@ -134,7 +135,12 @@ private fun OrderCard(
 
             Spacer(Modifier.height(8.dp))
 
-            Text("Mesa: ${order.serviceTableId}")
+            Text("Atendimento: ${order.fulfillmentType.toReadableText()}")
+
+            if (order.serviceTableId != null) {
+                Text("Mesa: ${order.serviceTableId}")
+            }
+
             Text("Status: ${order.status.toReadableText()}")
             Text("Total: R$ ${"%.2f".format(order.totalAmount)}")
 
@@ -151,6 +157,15 @@ private fun OrderCard(
                 }
             }
         }
+    }
+}
+
+private fun OrderFulfillmentType.toReadableText(): String {
+    return when (this) {
+        OrderFulfillmentType.DINE_IN -> "Comer no local"
+        OrderFulfillmentType.TAKEOUT -> "Retirada"
+        OrderFulfillmentType.DELIVERY -> "Entrega"
+        OrderFulfillmentType.UNKNOWN -> "Desconhecido"
     }
 }
 
