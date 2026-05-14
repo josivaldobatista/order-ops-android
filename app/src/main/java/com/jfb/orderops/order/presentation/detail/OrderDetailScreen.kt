@@ -19,7 +19,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -37,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import com.jfb.orderops.order.domain.model.Order
 import com.jfb.orderops.order.domain.model.OrderStatus
 import com.jfb.orderops.order.presentation.detail.components.OrderInfoSection
+import com.jfb.orderops.order.presentation.detail.components.OrderStatusActionsSection
 import com.jfb.orderops.order.presentation.state.OrderDetailUiState
 import com.jfb.orderops.product.domain.model.Product
 import kotlinx.coroutines.flow.Flow
@@ -144,7 +144,7 @@ private fun OrderDetailContent(
 
     Spacer(Modifier.height(16.dp))
 
-    OrderStatusActions(
+    OrderStatusActionsSection(
         status = order.status,
         isLoading = isLoading,
         onSendToPreparation = onSendToPreparation,
@@ -327,97 +327,6 @@ private fun AddItemSection(
         modifier = Modifier.fillMaxWidth()
     ) {
         Text("Adicionar item")
-    }
-}
-
-@Composable
-private fun OrderStatusActions(
-    status: OrderStatus,
-    isLoading: Boolean,
-    onSendToPreparation: () -> Unit,
-    onMarkAsReady: () -> Unit,
-    onFinish: () -> Unit,
-    onCancel: () -> Unit
-) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        when (status) {
-            OrderStatus.OPEN -> {
-                Button(
-                    onClick = onSendToPreparation,
-                    enabled = !isLoading,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Enviar para preparo")
-                }
-
-                OutlinedButton(
-                    onClick = onCancel,
-                    enabled = !isLoading,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Cancelar pedido")
-                }
-            }
-
-            OrderStatus.IN_PREPARATION -> {
-                Button(
-                    onClick = onMarkAsReady,
-                    enabled = !isLoading,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Marcar como pronto")
-                }
-
-                OutlinedButton(
-                    onClick = onCancel,
-                    enabled = !isLoading,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Cancelar pedido")
-                }
-            }
-
-            OrderStatus.READY -> {
-                Button(
-                    onClick = onFinish,
-                    enabled = !isLoading,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Pagar pedido")
-                }
-
-                OutlinedButton(
-                    onClick = onCancel,
-                    enabled = !isLoading,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Cancelar pedido")
-                }
-            }
-
-            OrderStatus.FINISHED -> {
-                Text(
-                    text = "Pedido finalizado.",
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            }
-
-            OrderStatus.CANCELLED -> {
-                Text(
-                    text = "Pedido cancelado.",
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            }
-
-            OrderStatus.UNKNOWN -> {
-                Text(
-                    text = "Status desconhecido.",
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            }
-        }
     }
 }
 
