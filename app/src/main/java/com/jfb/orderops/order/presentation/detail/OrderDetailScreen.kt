@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,7 +22,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -36,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import com.jfb.orderops.order.domain.model.Order
 import com.jfb.orderops.order.domain.model.OrderStatus
 import com.jfb.orderops.order.presentation.detail.components.OrderInfoSection
+import com.jfb.orderops.order.presentation.detail.components.OrderItemsSection
 import com.jfb.orderops.order.presentation.detail.components.OrderStatusActionsSection
 import com.jfb.orderops.order.presentation.state.OrderDetailUiState
 import com.jfb.orderops.product.domain.model.Product
@@ -75,6 +73,7 @@ fun OrderDetailScreen(
             SnackbarHost(hostState = snackbarHostState)
         }
     ) { paddingValues ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -83,6 +82,7 @@ fun OrderDetailScreen(
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
+
             Button(
                 onClick = onBack,
                 enabled = !uiState.isLoading
@@ -115,7 +115,6 @@ fun OrderDetailScreen(
                     isLoading = uiState.isLoading,
                     onSendToPreparation = onSendToPreparation,
                     onMarkAsReady = onMarkAsReady,
-                    onFinish = onFinish,
                     onGoToPayment = onGoToPayment,
                     onCancel = onCancel,
                     onAddItem = onAddItem,
@@ -133,13 +132,11 @@ private fun OrderDetailContent(
     isLoading: Boolean,
     onSendToPreparation: () -> Unit,
     onMarkAsReady: () -> Unit,
-    onFinish: () -> Unit,
     onGoToPayment: (Long, Double) -> Unit,
     onCancel: () -> Unit,
     onAddItem: (Long, Int) -> Unit,
     onRemoveItem: (Long) -> Unit
 ) {
-
     OrderInfoSection(order = order)
 
     Spacer(Modifier.height(16.dp))
@@ -167,58 +164,11 @@ private fun OrderDetailContent(
 
     Spacer(Modifier.height(24.dp))
 
-    Text(
-        text = "Itens",
-        style = MaterialTheme.typography.titleLarge,
-        color = MaterialTheme.colorScheme.onBackground
+    OrderItemsSection(
+        order = order,
+        isLoading = isLoading,
+        onRemoveItem = onRemoveItem
     )
-
-    Spacer(Modifier.height(8.dp))
-
-    if (order.items.isEmpty()) {
-        Text(
-            text = "Nenhum item no pedido.",
-            color = MaterialTheme.colorScheme.onBackground
-        )
-    } else {
-        order.items.forEach { item ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.onSurface
-                )
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column {
-                        Text(
-                            text = item.productName,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Text("Quantidade: ${item.quantity}")
-                        Text("Unitário: R$ ${"%.2f".format(item.unitPrice)}")
-                        Text("Subtotal: R$ ${"%.2f".format(item.totalPrice)}")
-                    }
-
-                    if (order.status.canEditItems()) {
-                        TextButton(
-                            onClick = { onRemoveItem(item.id) },
-                            enabled = !isLoading
-                        ) {
-                            Text("Remover")
-                        }
-                    }
-                }
-            }
-        }
-    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -229,9 +179,11 @@ private fun AddItemSection(
     onAddItem: (Long, Int) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
+
     var selectedProductId by remember(products) {
         mutableStateOf(products.firstOrNull()?.id)
     }
+
     var quantity by remember { mutableStateOf(1) }
 
     val selectedProduct = products.firstOrNull {
