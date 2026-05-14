@@ -1,17 +1,16 @@
 package com.jfb.orderops.order.presentation.detail.components
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
@@ -24,69 +23,77 @@ fun EqualPaymentSplitSection(
     splitPreview: PaymentSplitPreviewResponse?,
     isLoading: Boolean,
     onPeopleCountChange: (String) -> Unit,
-    onCalculateClick: () -> Unit
+    onCalculateClick: () -> Unit,
+    onDismissPreview: () -> Unit
 ) {
-
     Column {
-
         Text(
             text = "Dividir igualmente",
-            style = MaterialTheme.typography.titleMedium
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onBackground
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(Modifier.height(12.dp))
 
         OutlinedTextField(
             value = peopleCount,
             onValueChange = onPeopleCountChange,
-            label = {
-                Text("Número de pessoas")
-            },
+            label = { Text("Número de pessoas") },
             singleLine = true,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Number
-            )
+            ),
+            modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(Modifier.height(12.dp))
 
         Button(
             onClick = onCalculateClick,
-            enabled = !isLoading
+            enabled = !isLoading,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Calcular divisão")
+            Text(
+                text = if (isLoading) {
+                    "Calculando..."
+                } else {
+                    "Calcular divisão"
+                }
+            )
         }
+    }
 
-        splitPreview?.let { preview ->
+    splitPreview?.let { preview ->
+        AlertDialog(
+            onDismissRequest = onDismissPreview,
+            title = {
+                Text("Divisão igual")
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "Total: R$ ${"%.2f".format(preview.totalAmount)}",
+                        style = MaterialTheme.typography.titleMedium
+                    )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-
-                Column(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(Modifier.height(12.dp))
 
                     preview.participants.forEach { participant ->
+                        Text(
+                            text = "${participant.name}: R$ ${"%.2f".format(participant.amount)}"
+                        )
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-
-                            Text(participant.name)
-
-                            Text("R$ ${participant.amount}")
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(Modifier.height(6.dp))
                     }
                 }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = onDismissPreview
+                ) {
+                    Text("Fechar")
+                }
             }
-        }
+        )
     }
 }

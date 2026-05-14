@@ -13,6 +13,7 @@ import com.jfb.orderops.core.network.RetrofitClient
 import com.jfb.orderops.core.storage.SessionStorage
 import com.jfb.orderops.order.data.repository.OrderRepositoryImpl
 import com.jfb.orderops.order.domain.usecase.GetOrderByIdUseCase
+import com.jfb.orderops.order.domain.usecase.PreviewPaymentSplitUseCase
 import com.jfb.orderops.payment.data.repository.PaymentRepositoryImpl
 import com.jfb.orderops.payment.domain.usecase.PayOrderUseCase
 import com.jfb.orderops.payment.presentation.pay.PaymentScreen
@@ -65,12 +66,16 @@ fun NavGraphBuilder.paymentGraph(
         val getOrderByIdUseCase =
             GetOrderByIdUseCase(orderRepository)
 
+        val previewPaymentSplitUseCase =
+            PreviewPaymentSplitUseCase(orderRepository)
+
         val viewModel: PaymentViewModel = viewModel(
             factory = PaymentViewModelFactory(
                 orderId = orderId,
                 amount = amount,
                 payOrderUseCase = payOrderUseCase,
-                getOrderByIdUseCase = getOrderByIdUseCase
+                getOrderByIdUseCase = getOrderByIdUseCase,
+                previewPaymentSplitUseCase = previewPaymentSplitUseCase
             )
         )
 
@@ -99,6 +104,9 @@ fun NavGraphBuilder.paymentGraph(
                     }
                 }
             },
+            onSplitPeopleCountChange = viewModel::onSplitPeopleCountChange,
+            onPreviewPaymentSplit = viewModel::previewPaymentSplit,
+            onDismissSplitPreview = viewModel::dismissSplitPreview,
             onBack = {
                 navController.popBackStack()
             }

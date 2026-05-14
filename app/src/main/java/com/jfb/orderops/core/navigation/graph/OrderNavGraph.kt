@@ -131,8 +131,6 @@ fun NavGraphBuilder.orderGraph(
 
         val addOrderItemUseCase = AddOrderItemUseCase(orderRepository)
         val removeOrderItemUseCase = RemoveOrderItemUseCase(orderRepository)
-        val previewPaymentSplitUseCase =
-            PreviewPaymentSplitUseCase(orderRepository)
 
         val listProductsUseCase = ListProductsUseCase(productRepository)
 
@@ -146,8 +144,7 @@ fun NavGraphBuilder.orderGraph(
                 cancelOrderUseCase = cancelOrderUseCase,
                 addOrderItemUseCase = addOrderItemUseCase,
                 removeOrderItemUseCase = removeOrderItemUseCase,
-                listProductsUseCase = listProductsUseCase,
-                previewPaymentSplitUseCase = previewPaymentSplitUseCase,
+                listProductsUseCase = listProductsUseCase
             )
         )
 
@@ -178,9 +175,7 @@ fun NavGraphBuilder.orderGraph(
             },
             onRemoveItem = { itemId ->
                 viewModel.removeItem(itemId)
-            },
-            onSplitPeopleCountChange = viewModel::onSplitPeopleCountChange,
-            onPreviewPaymentSplit = viewModel::previewPaymentSplit
+            }
         )
     }
 }

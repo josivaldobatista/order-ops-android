@@ -1,5 +1,6 @@
 package com.jfb.orderops.payment.presentation.state
 
+import com.jfb.orderops.order.data.dto.PaymentSplitPreviewResponse
 import com.jfb.orderops.order.domain.model.Order
 import com.jfb.orderops.payment.domain.model.PaymentMethod
 
@@ -9,5 +10,9 @@ data class PaymentUiState(
     val order: Order? = null,
     val selectedMethod: PaymentMethod = PaymentMethod.PIX,
     val isLoading: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+
+    val splitPeopleCount: String = "",
+    val splitPreview: PaymentSplitPreviewResponse? = null,
+    val isLoadingSplitPreview: Boolean = false
 )

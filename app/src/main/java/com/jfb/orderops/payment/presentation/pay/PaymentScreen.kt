@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.jfb.orderops.order.presentation.detail.components.EqualPaymentSplitSection
 import com.jfb.orderops.payment.domain.model.PaymentMethod
 import com.jfb.orderops.payment.presentation.state.PaymentUiState
 
@@ -26,18 +27,23 @@ fun PaymentScreen(
     uiState: PaymentUiState,
     onMethodSelected: (PaymentMethod) -> Unit,
     onPayClick: () -> Unit,
+    onSplitPeopleCountChange: (String) -> Unit,
+    onPreviewPaymentSplit: () -> Unit,
+    onDismissSplitPreview: () -> Unit,
     onBack: () -> Unit
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
                 .padding(16.dp)
         ) {
+
             OutlinedButton(
                 onClick = onBack,
                 enabled = !uiState.isLoading
@@ -63,6 +69,17 @@ fun PaymentScreen(
 
             Spacer(Modifier.height(24.dp))
 
+            EqualPaymentSplitSection(
+                peopleCount = uiState.splitPeopleCount,
+                splitPreview = uiState.splitPreview,
+                isLoading = uiState.isLoadingSplitPreview,
+                onPeopleCountChange = onSplitPeopleCountChange,
+                onCalculateClick = onPreviewPaymentSplit,
+                onDismissPreview = onDismissSplitPreview
+            )
+
+            Spacer(Modifier.height(24.dp))
+
             Text(
                 text = "Forma de pagamento",
                 style = MaterialTheme.typography.titleMedium,
@@ -74,7 +91,9 @@ fun PaymentScreen(
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+
                 PaymentMethod.entries.forEach { method ->
+
                     FilterChip(
                         selected = uiState.selectedMethod == method,
                         onClick = { onMethodSelected(method) },
@@ -89,6 +108,7 @@ fun PaymentScreen(
             Spacer(Modifier.height(24.dp))
 
             uiState.errorMessage?.let {
+
                 Text(
                     text = it,
                     color = MaterialTheme.colorScheme.error

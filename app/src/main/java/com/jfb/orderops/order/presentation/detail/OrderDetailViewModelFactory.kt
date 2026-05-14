@@ -21,8 +21,7 @@ class OrderDetailViewModelFactory(
     private val cancelOrderUseCase: CancelOrderUseCase,
     private val addOrderItemUseCase: AddOrderItemUseCase,
     private val removeOrderItemUseCase: RemoveOrderItemUseCase,
-    private val listProductsUseCase: ListProductsUseCase,
-    private val previewPaymentSplitUseCase: PreviewPaymentSplitUseCase
+    private val listProductsUseCase: ListProductsUseCase
 ) : ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -37,8 +36,7 @@ class OrderDetailViewModelFactory(
                 cancelOrderUseCase = cancelOrderUseCase,
                 addOrderItemUseCase = addOrderItemUseCase,
                 removeOrderItemUseCase = removeOrderItemUseCase,
-                listProductsUseCase = listProductsUseCase,
-                previewPaymentSplitUseCase = previewPaymentSplitUseCase
+                listProductsUseCase = listProductsUseCase
             ) as T
         }
 
