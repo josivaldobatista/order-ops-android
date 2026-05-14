@@ -4,6 +4,8 @@ import com.jfb.orderops.core.result.AppResult
 import com.jfb.orderops.order.data.dto.AddOrderItemRequest
 import com.jfb.orderops.order.data.dto.CreateOrderItemRequest
 import com.jfb.orderops.order.data.dto.CreateOrderRequest
+import com.jfb.orderops.order.data.dto.PaymentSplitPreviewRequest
+import com.jfb.orderops.order.data.dto.PaymentSplitPreviewResponse
 import com.jfb.orderops.order.data.dto.toDomain
 import com.jfb.orderops.order.data.remote.OrderApi
 import com.jfb.orderops.order.domain.model.CreateOrderItem
@@ -152,6 +154,28 @@ class OrderRepositoryImpl(
         } catch (e: Exception) {
             AppResult.Error(
                 message = e.message ?: "Erro ao remover item.",
+                throwable = e
+            )
+        }
+    }
+
+    override suspend fun previewPaymentSplit(
+        orderId: Long,
+        numberOfPeople: Int
+    ): AppResult<PaymentSplitPreviewResponse> {
+        return try {
+            val preview = api.previewPaymentSplit(
+                orderId = orderId,
+                request = PaymentSplitPreviewRequest(
+                    mode = "EQUAL",
+                    numberOfPeople = numberOfPeople
+                )
+            )
+
+            AppResult.Success(preview)
+        } catch (e: Exception) {
+            AppResult.Error(
+                message = e.message ?: "Erro ao calcular divisão do pagamento.",
                 throwable = e
             )
         }

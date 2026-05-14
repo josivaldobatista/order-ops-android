@@ -1,6 +1,7 @@
 package com.jfb.orderops.order.domain.repository
 
 import com.jfb.orderops.core.result.AppResult
+import com.jfb.orderops.order.data.dto.PaymentSplitPreviewResponse
 import com.jfb.orderops.order.domain.model.CreateOrderItem
 import com.jfb.orderops.order.domain.model.Order
 import com.jfb.orderops.order.domain.model.OrderFulfillmentType
@@ -36,4 +37,9 @@ interface OrderRepository {
         orderId: Long,
         itemId: Long
     ): AppResult<Order>
+
+    suspend fun previewPaymentSplit(
+        orderId: Long,
+        numberOfPeople: Int
+    ): AppResult<PaymentSplitPreviewResponse>
 }

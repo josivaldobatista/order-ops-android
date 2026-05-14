@@ -7,6 +7,7 @@ import com.jfb.orderops.order.domain.usecase.CancelOrderUseCase
 import com.jfb.orderops.order.domain.usecase.FinishOrderUseCase
 import com.jfb.orderops.order.domain.usecase.GetOrderByIdUseCase
 import com.jfb.orderops.order.domain.usecase.MarkOrderAsReadyUseCase
+import com.jfb.orderops.order.domain.usecase.PreviewPaymentSplitUseCase
 import com.jfb.orderops.order.domain.usecase.RemoveOrderItemUseCase
 import com.jfb.orderops.order.domain.usecase.SendOrderToPreparationUseCase
 import com.jfb.orderops.product.domain.usecase.ListProductsUseCase
@@ -20,7 +21,8 @@ class OrderDetailViewModelFactory(
     private val cancelOrderUseCase: CancelOrderUseCase,
     private val addOrderItemUseCase: AddOrderItemUseCase,
     private val removeOrderItemUseCase: RemoveOrderItemUseCase,
-    private val listProductsUseCase: ListProductsUseCase
+    private val listProductsUseCase: ListProductsUseCase,
+    private val previewPaymentSplitUseCase: PreviewPaymentSplitUseCase
 ) : ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -35,7 +37,8 @@ class OrderDetailViewModelFactory(
                 cancelOrderUseCase = cancelOrderUseCase,
                 addOrderItemUseCase = addOrderItemUseCase,
                 removeOrderItemUseCase = removeOrderItemUseCase,
-                listProductsUseCase = listProductsUseCase
+                listProductsUseCase = listProductsUseCase,
+                previewPaymentSplitUseCase = previewPaymentSplitUseCase
             ) as T
         }
 

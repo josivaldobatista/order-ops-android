@@ -9,6 +9,8 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
 import com.jfb.orderops.order.data.dto.AddOrderItemRequest
+import com.jfb.orderops.order.data.dto.PaymentSplitPreviewRequest
+import com.jfb.orderops.order.data.dto.PaymentSplitPreviewResponse
 import retrofit2.http.DELETE
 
 interface OrderApi {
@@ -59,4 +61,10 @@ interface OrderApi {
         @Path("orderId") orderId: Long,
         @Path("itemId") itemId: Long
     ): OrderResponse
+
+    @POST("api/v1/orders/{orderId}/payment-splits/preview")
+    suspend fun previewPaymentSplit(
+        @Path("orderId") orderId: Long,
+        @Body request: PaymentSplitPreviewRequest
+    ): PaymentSplitPreviewResponse
 }

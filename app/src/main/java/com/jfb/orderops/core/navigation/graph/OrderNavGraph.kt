@@ -20,6 +20,7 @@ import com.jfb.orderops.order.domain.usecase.CreateOrderUseCase
 import com.jfb.orderops.order.domain.usecase.FinishOrderUseCase
 import com.jfb.orderops.order.domain.usecase.GetOrderByIdUseCase
 import com.jfb.orderops.order.domain.usecase.MarkOrderAsReadyUseCase
+import com.jfb.orderops.order.domain.usecase.PreviewPaymentSplitUseCase
 import com.jfb.orderops.order.domain.usecase.RemoveOrderItemUseCase
 import com.jfb.orderops.order.domain.usecase.SendOrderToPreparationUseCase
 import com.jfb.orderops.order.presentation.create.CreateOrderScreen
@@ -130,6 +131,8 @@ fun NavGraphBuilder.orderGraph(
 
         val addOrderItemUseCase = AddOrderItemUseCase(orderRepository)
         val removeOrderItemUseCase = RemoveOrderItemUseCase(orderRepository)
+        val previewPaymentSplitUseCase =
+            PreviewPaymentSplitUseCase(orderRepository)
 
         val listProductsUseCase = ListProductsUseCase(productRepository)
 
@@ -143,7 +146,8 @@ fun NavGraphBuilder.orderGraph(
                 cancelOrderUseCase = cancelOrderUseCase,
                 addOrderItemUseCase = addOrderItemUseCase,
                 removeOrderItemUseCase = removeOrderItemUseCase,
-                listProductsUseCase = listProductsUseCase
+                listProductsUseCase = listProductsUseCase,
+                previewPaymentSplitUseCase = previewPaymentSplitUseCase,
             )
         )
 
@@ -174,7 +178,9 @@ fun NavGraphBuilder.orderGraph(
             },
             onRemoveItem = { itemId ->
                 viewModel.removeItem(itemId)
-            }
+            },
+            onSplitPeopleCountChange = viewModel::onSplitPeopleCountChange,
+            onPreviewPaymentSplit = viewModel::previewPaymentSplit
         )
     }
 }

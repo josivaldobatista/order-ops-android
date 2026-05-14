@@ -9,6 +9,7 @@ import com.jfb.orderops.order.domain.usecase.CancelOrderUseCase
 import com.jfb.orderops.order.domain.usecase.FinishOrderUseCase
 import com.jfb.orderops.order.domain.usecase.GetOrderByIdUseCase
 import com.jfb.orderops.order.domain.usecase.MarkOrderAsReadyUseCase
+import com.jfb.orderops.order.domain.usecase.PreviewPaymentSplitUseCase
 import com.jfb.orderops.order.domain.usecase.RemoveOrderItemUseCase
 import com.jfb.orderops.order.domain.usecase.SendOrderToPreparationUseCase
 import com.jfb.orderops.order.presentation.state.OrderDetailUiState
@@ -30,7 +31,8 @@ class OrderDetailViewModel(
     private val cancelOrderUseCase: CancelOrderUseCase,
     private val addOrderItemUseCase: AddOrderItemUseCase,
     private val removeOrderItemUseCase: RemoveOrderItemUseCase,
-    private val listProductsUseCase: ListProductsUseCase
+    private val listProductsUseCase: ListProductsUseCase,
+    private val previewPaymentSplitUseCase: PreviewPaymentSplitUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(OrderDetailUiState())
@@ -193,6 +195,60 @@ class OrderDetailViewModel(
                             errorMessage = result.message
                         )
                     }
+                }
+
+                AppResult.Loading -> Unit
+            }
+        }
+    }
+
+    fun onSplitPeopleCountChange(value: String) {
+        val onlyNumbers = value.filter { it.isDigit() }
+
+        _uiState.update {
+            it.copy(
+                splitPeopleCount = onlyNumbers,
+                splitPreview = null
+            )
+        }
+    }
+
+    fun previewPaymentSplit() {
+        val peopleCount = uiState.value.splitPeopleCount.toIntOrNull()
+
+        if (peopleCount == null || peopleCount <= 0) {
+            viewModelScope.launch {
+                _events.emit("Informe um número de pessoas válido.")
+            }
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(isLoadingSplitPreview = true)
+            }
+
+            when (
+                val result = previewPaymentSplitUseCase(
+                    orderId = orderId,
+                    numberOfPeople = peopleCount
+                )
+            ) {
+                is AppResult.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            isLoadingSplitPreview = false,
+                            splitPreview = result.data
+                        )
+                    }
+                }
+
+                is AppResult.Error -> {
+                    _uiState.update {
+                        it.copy(isLoadingSplitPreview = false)
+                    }
+
+                    _events.emit(result.message)
                 }
 
                 AppResult.Loading -> Unit

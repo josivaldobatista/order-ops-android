@@ -32,6 +32,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.jfb.orderops.order.domain.model.Order
 import com.jfb.orderops.order.domain.model.OrderStatus
+import com.jfb.orderops.order.presentation.detail.components.EqualPaymentSplitSection
+import com.jfb.orderops.order.presentation.detail.components.OrderClosingSection
 import com.jfb.orderops.order.presentation.detail.components.OrderInfoSection
 import com.jfb.orderops.order.presentation.detail.components.OrderItemsSection
 import com.jfb.orderops.order.presentation.detail.components.OrderStatusActionsSection
@@ -51,6 +53,8 @@ fun OrderDetailScreen(
     onCancel: () -> Unit,
     onAddItem: (Long, Int) -> Unit,
     onRemoveItem: (Long) -> Unit,
+    onSplitPeopleCountChange: (String) -> Unit,
+    onPreviewPaymentSplit: () -> Unit,
     events: Flow<String>
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -110,6 +114,7 @@ fun OrderDetailScreen(
 
             uiState.order?.let { order ->
                 OrderDetailContent(
+                    uiState = uiState,
                     order = order,
                     products = uiState.products,
                     isLoading = uiState.isLoading,
@@ -118,7 +123,9 @@ fun OrderDetailScreen(
                     onGoToPayment = onGoToPayment,
                     onCancel = onCancel,
                     onAddItem = onAddItem,
-                    onRemoveItem = onRemoveItem
+                    onRemoveItem = onRemoveItem,
+                    onSplitPeopleCountChange = onSplitPeopleCountChange,
+                    onPreviewPaymentSplit = onPreviewPaymentSplit
                 )
             }
         }
@@ -127,6 +134,7 @@ fun OrderDetailScreen(
 
 @Composable
 private fun OrderDetailContent(
+    uiState: OrderDetailUiState,
     order: Order,
     products: List<Product>,
     isLoading: Boolean,
@@ -135,7 +143,9 @@ private fun OrderDetailContent(
     onGoToPayment: (Long, Double) -> Unit,
     onCancel: () -> Unit,
     onAddItem: (Long, Int) -> Unit,
-    onRemoveItem: (Long) -> Unit
+    onRemoveItem: (Long) -> Unit,
+    onSplitPeopleCountChange: (String) -> Unit,
+    onPreviewPaymentSplit: () -> Unit
 ) {
     OrderInfoSection(order = order)
 
@@ -169,6 +179,18 @@ private fun OrderDetailContent(
         isLoading = isLoading,
         onRemoveItem = onRemoveItem
     )
+
+    Spacer(Modifier.height(24.dp))
+
+    OrderClosingSection {
+        EqualPaymentSplitSection(
+            peopleCount = uiState.splitPeopleCount,
+            splitPreview = uiState.splitPreview,
+            isLoading = uiState.isLoadingSplitPreview,
+            onPeopleCountChange = onSplitPeopleCountChange,
+            onCalculateClick = onPreviewPaymentSplit
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
