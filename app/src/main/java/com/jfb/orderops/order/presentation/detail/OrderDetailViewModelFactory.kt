@@ -4,8 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.jfb.orderops.order.domain.usecase.AddOrderItemUseCase
 import com.jfb.orderops.order.domain.usecase.CancelOrderUseCase
+import com.jfb.orderops.order.domain.usecase.CreateOrderParticipantUseCase
 import com.jfb.orderops.order.domain.usecase.FinishOrderUseCase
 import com.jfb.orderops.order.domain.usecase.GetOrderByIdUseCase
+import com.jfb.orderops.order.domain.usecase.ListOrderParticipantsUseCase
 import com.jfb.orderops.order.domain.usecase.MarkOrderAsReadyUseCase
 import com.jfb.orderops.order.domain.usecase.PreviewPaymentSplitUseCase
 import com.jfb.orderops.order.domain.usecase.RemoveOrderItemUseCase
@@ -21,7 +23,9 @@ class OrderDetailViewModelFactory(
     private val cancelOrderUseCase: CancelOrderUseCase,
     private val addOrderItemUseCase: AddOrderItemUseCase,
     private val removeOrderItemUseCase: RemoveOrderItemUseCase,
-    private val listProductsUseCase: ListProductsUseCase
+    private val listProductsUseCase: ListProductsUseCase,
+    private val listOrderParticipantsUseCase: ListOrderParticipantsUseCase,
+    private val createOrderParticipantUseCase: CreateOrderParticipantUseCase
 ) : ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -36,7 +40,9 @@ class OrderDetailViewModelFactory(
                 cancelOrderUseCase = cancelOrderUseCase,
                 addOrderItemUseCase = addOrderItemUseCase,
                 removeOrderItemUseCase = removeOrderItemUseCase,
-                listProductsUseCase = listProductsUseCase
+                listProductsUseCase = listProductsUseCase,
+                listOrderParticipantsUseCase = listOrderParticipantsUseCase,
+                createOrderParticipantUseCase = createOrderParticipantUseCase
             ) as T
         }
 

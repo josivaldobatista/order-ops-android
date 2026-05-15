@@ -3,6 +3,7 @@ package com.jfb.orderops.order.data.repository
 import com.jfb.orderops.core.result.AppResult
 import com.jfb.orderops.order.data.dto.AddOrderItemRequest
 import com.jfb.orderops.order.data.dto.CreateOrderItemRequest
+import com.jfb.orderops.order.data.dto.CreateOrderParticipantRequest
 import com.jfb.orderops.order.data.dto.CreateOrderRequest
 import com.jfb.orderops.order.data.dto.PaymentSplitPreviewRequest
 import com.jfb.orderops.order.data.dto.PaymentSplitPreviewResponse
@@ -11,6 +12,7 @@ import com.jfb.orderops.order.data.remote.OrderApi
 import com.jfb.orderops.order.domain.model.CreateOrderItem
 import com.jfb.orderops.order.domain.model.Order
 import com.jfb.orderops.order.domain.model.OrderFulfillmentType
+import com.jfb.orderops.order.domain.model.OrderParticipant
 import com.jfb.orderops.order.domain.model.OrderStatus
 import com.jfb.orderops.order.domain.repository.OrderRepository
 import retrofit2.HttpException
@@ -176,6 +178,41 @@ class OrderRepositoryImpl(
         } catch (e: Exception) {
             AppResult.Error(
                 message = e.message ?: "Erro ao calcular divisão do pagamento.",
+                throwable = e
+            )
+        }
+    }
+
+    override suspend fun listParticipants(
+        orderId: Long
+    ): AppResult<List<OrderParticipant>> {
+        return try {
+            val participants = api.listParticipants(orderId)
+                .map { it.toDomain() }
+
+            AppResult.Success(participants)
+        } catch (e: Exception) {
+            AppResult.Error(
+                message = e.message ?: "Erro ao carregar participantes.",
+                throwable = e
+            )
+        }
+    }
+
+    override suspend fun createParticipant(
+        orderId: Long,
+        name: String
+    ): AppResult<OrderParticipant> {
+        return try {
+            val participant = api.createParticipant(
+                orderId = orderId,
+                request = CreateOrderParticipantRequest(name = name)
+            ).toDomain()
+
+            AppResult.Success(participant)
+        } catch (e: Exception) {
+            AppResult.Error(
+                message = e.message ?: "Erro ao criar participante.",
                 throwable = e
             )
         }

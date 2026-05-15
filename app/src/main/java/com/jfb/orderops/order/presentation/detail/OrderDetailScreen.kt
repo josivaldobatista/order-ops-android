@@ -34,6 +34,7 @@ import com.jfb.orderops.order.domain.model.Order
 import com.jfb.orderops.order.domain.model.OrderStatus
 import com.jfb.orderops.order.presentation.detail.components.OrderInfoSection
 import com.jfb.orderops.order.presentation.detail.components.OrderItemsSection
+import com.jfb.orderops.order.presentation.detail.components.OrderParticipantsSection
 import com.jfb.orderops.order.presentation.detail.components.OrderStatusActionsSection
 import com.jfb.orderops.order.presentation.state.OrderDetailUiState
 import com.jfb.orderops.product.domain.model.Product
@@ -51,7 +52,9 @@ fun OrderDetailScreen(
     onCancel: () -> Unit,
     onAddItem: (Long, Int) -> Unit,
     onRemoveItem: (Long) -> Unit,
-    events: Flow<String>
+    events: Flow<String>,
+    onNewParticipantNameChange: (String) -> Unit,
+    onCreateParticipant: () -> Unit,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -118,7 +121,10 @@ fun OrderDetailScreen(
                     onGoToPayment = onGoToPayment,
                     onCancel = onCancel,
                     onAddItem = onAddItem,
-                    onRemoveItem = onRemoveItem
+                    onRemoveItem = onRemoveItem,
+                    uiState = uiState,
+                    onNewParticipantNameChange = onNewParticipantNameChange,
+                    onCreateParticipant = onCreateParticipant,
                 )
             }
         }
@@ -136,6 +142,9 @@ private fun OrderDetailContent(
     onCancel: () -> Unit,
     onAddItem: (Long, Int) -> Unit,
     onRemoveItem: (Long) -> Unit,
+    uiState: OrderDetailUiState,
+    onNewParticipantNameChange: (String) -> Unit,
+    onCreateParticipant: () -> Unit
 ) {
     OrderInfoSection(order = order)
 
@@ -150,6 +159,16 @@ private fun OrderDetailContent(
             onGoToPayment(order.id, order.totalAmount)
         },
         onCancel = onCancel
+    )
+
+    Spacer(Modifier.height(24.dp))
+
+    OrderParticipantsSection(
+        participants = uiState.participants,
+        newParticipantName = uiState.newParticipantName,
+        isLoading = isLoading || uiState.isCreatingParticipant,
+        onNameChange = onNewParticipantNameChange,
+        onAddParticipant = onCreateParticipant
     )
 
     if (order.status.canEditItems()) {

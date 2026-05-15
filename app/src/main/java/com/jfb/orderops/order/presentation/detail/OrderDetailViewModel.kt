@@ -6,8 +6,10 @@ import com.jfb.orderops.core.result.AppResult
 import com.jfb.orderops.order.domain.model.Order
 import com.jfb.orderops.order.domain.usecase.AddOrderItemUseCase
 import com.jfb.orderops.order.domain.usecase.CancelOrderUseCase
+import com.jfb.orderops.order.domain.usecase.CreateOrderParticipantUseCase
 import com.jfb.orderops.order.domain.usecase.FinishOrderUseCase
 import com.jfb.orderops.order.domain.usecase.GetOrderByIdUseCase
+import com.jfb.orderops.order.domain.usecase.ListOrderParticipantsUseCase
 import com.jfb.orderops.order.domain.usecase.MarkOrderAsReadyUseCase
 import com.jfb.orderops.order.domain.usecase.RemoveOrderItemUseCase
 import com.jfb.orderops.order.domain.usecase.SendOrderToPreparationUseCase
@@ -30,7 +32,9 @@ class OrderDetailViewModel(
     private val cancelOrderUseCase: CancelOrderUseCase,
     private val addOrderItemUseCase: AddOrderItemUseCase,
     private val removeOrderItemUseCase: RemoveOrderItemUseCase,
-    private val listProductsUseCase: ListProductsUseCase
+    private val listProductsUseCase: ListProductsUseCase,
+    private val listOrderParticipantsUseCase: ListOrderParticipantsUseCase,
+    private val createOrderParticipantUseCase: CreateOrderParticipantUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(OrderDetailUiState())
@@ -57,15 +61,29 @@ class OrderDetailViewModel(
             }
 
             val productsResult = listProductsUseCase.execute()
+            val participantsResult = listOrderParticipantsUseCase.execute(orderId)
 
             when {
-                orderResult is AppResult.Success && productsResult is AppResult.Success -> {
+                orderResult is AppResult.Success &&
+                        productsResult is AppResult.Success &&
+                        participantsResult is AppResult.Success -> {
+
                     _uiState.update {
                         it.copy(
                             isLoading = false,
                             order = orderResult.data,
                             products = productsResult.data,
+                            participants = participantsResult.data,
                             errorMessage = null
+                        )
+                    }
+                }
+
+                participantsResult is AppResult.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = participantsResult.message
                         )
                     }
                 }
@@ -190,6 +208,77 @@ class OrderDetailViewModel(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
+                            errorMessage = result.message
+                        )
+                    }
+                }
+
+                AppResult.Loading -> Unit
+            }
+        }
+    }
+
+    fun onNewParticipantNameChange(value: String) {
+        _uiState.update {
+            it.copy(
+                newParticipantName = value,
+                errorMessage = null
+            )
+        }
+    }
+
+    fun createParticipant() {
+        val name = _uiState.value.newParticipantName
+
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isCreatingParticipant = true,
+                    errorMessage = null
+                )
+            }
+
+            when (
+                val result = createOrderParticipantUseCase.execute(
+                    orderId = orderId,
+                    name = name
+                )
+            ) {
+                is AppResult.Success -> {
+                    val participantsResult =
+                        listOrderParticipantsUseCase.execute(orderId)
+
+                    when (participantsResult) {
+                        is AppResult.Success -> {
+                            _uiState.update {
+                                it.copy(
+                                    isCreatingParticipant = false,
+                                    newParticipantName = "",
+                                    participants = participantsResult.data,
+                                    errorMessage = null
+                                )
+                            }
+
+                            _events.emit("Participante adicionado com sucesso")
+                        }
+
+                        is AppResult.Error -> {
+                            _uiState.update {
+                                it.copy(
+                                    isCreatingParticipant = false,
+                                    errorMessage = participantsResult.message
+                                )
+                            }
+                        }
+
+                        AppResult.Loading -> Unit
+                    }
+                }
+
+                is AppResult.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            isCreatingParticipant = false,
                             errorMessage = result.message
                         )
                     }

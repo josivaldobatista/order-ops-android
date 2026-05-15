@@ -16,9 +16,11 @@ import com.jfb.orderops.core.storage.SessionStorage
 import com.jfb.orderops.order.data.repository.OrderRepositoryImpl
 import com.jfb.orderops.order.domain.usecase.AddOrderItemUseCase
 import com.jfb.orderops.order.domain.usecase.CancelOrderUseCase
+import com.jfb.orderops.order.domain.usecase.CreateOrderParticipantUseCase
 import com.jfb.orderops.order.domain.usecase.CreateOrderUseCase
 import com.jfb.orderops.order.domain.usecase.FinishOrderUseCase
 import com.jfb.orderops.order.domain.usecase.GetOrderByIdUseCase
+import com.jfb.orderops.order.domain.usecase.ListOrderParticipantsUseCase
 import com.jfb.orderops.order.domain.usecase.MarkOrderAsReadyUseCase
 import com.jfb.orderops.order.domain.usecase.PreviewPaymentSplitUseCase
 import com.jfb.orderops.order.domain.usecase.RemoveOrderItemUseCase
@@ -132,6 +134,12 @@ fun NavGraphBuilder.orderGraph(
         val addOrderItemUseCase = AddOrderItemUseCase(orderRepository)
         val removeOrderItemUseCase = RemoveOrderItemUseCase(orderRepository)
 
+        val listOrderParticipantsUseCase =
+            ListOrderParticipantsUseCase(orderRepository)
+
+        val createOrderParticipantUseCase =
+            CreateOrderParticipantUseCase(orderRepository)
+
         val listProductsUseCase = ListProductsUseCase(productRepository)
 
         val viewModel: OrderDetailViewModel = viewModel(
@@ -144,7 +152,9 @@ fun NavGraphBuilder.orderGraph(
                 cancelOrderUseCase = cancelOrderUseCase,
                 addOrderItemUseCase = addOrderItemUseCase,
                 removeOrderItemUseCase = removeOrderItemUseCase,
-                listProductsUseCase = listProductsUseCase
+                listProductsUseCase = listProductsUseCase,
+                listOrderParticipantsUseCase = listOrderParticipantsUseCase,
+                createOrderParticipantUseCase = createOrderParticipantUseCase,
             )
         )
 
@@ -157,6 +167,8 @@ fun NavGraphBuilder.orderGraph(
         OrderDetailScreen(
             uiState = uiState,
             onRefresh = viewModel::loadAll,
+            onNewParticipantNameChange = viewModel::onNewParticipantNameChange,
+            onCreateParticipant = viewModel::createParticipant,
             onBack = {
                 navController.popBackStack()
             },

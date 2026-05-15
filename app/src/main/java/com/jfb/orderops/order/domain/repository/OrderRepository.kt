@@ -5,6 +5,7 @@ import com.jfb.orderops.order.data.dto.PaymentSplitPreviewResponse
 import com.jfb.orderops.order.domain.model.CreateOrderItem
 import com.jfb.orderops.order.domain.model.Order
 import com.jfb.orderops.order.domain.model.OrderFulfillmentType
+import com.jfb.orderops.order.domain.model.OrderParticipant
 import com.jfb.orderops.order.domain.model.OrderStatus
 
 interface OrderRepository {
@@ -42,4 +43,13 @@ interface OrderRepository {
         orderId: Long,
         numberOfPeople: Int
     ): AppResult<PaymentSplitPreviewResponse>
+
+    suspend fun listParticipants(
+        orderId: Long
+    ): AppResult<List<OrderParticipant>>
+
+    suspend fun createParticipant(
+        orderId: Long,
+        name: String
+    ): AppResult<OrderParticipant>
 }
