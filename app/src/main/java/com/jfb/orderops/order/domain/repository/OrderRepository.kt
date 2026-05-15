@@ -6,6 +6,7 @@ import com.jfb.orderops.order.domain.model.CreateOrderItem
 import com.jfb.orderops.order.domain.model.Order
 import com.jfb.orderops.order.domain.model.OrderFulfillmentType
 import com.jfb.orderops.order.domain.model.OrderParticipant
+import com.jfb.orderops.order.domain.model.OrderParticipantConsumptionPreview
 import com.jfb.orderops.order.domain.model.OrderStatus
 
 interface OrderRepository {
@@ -58,4 +59,8 @@ interface OrderRepository {
         itemId: Long,
         participantId: Long?
     ): AppResult<Order>
+
+    suspend fun getParticipantConsumptionPreview(
+        orderId: Long
+    ): AppResult<OrderParticipantConsumptionPreview>
 }

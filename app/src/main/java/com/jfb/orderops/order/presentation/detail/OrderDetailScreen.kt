@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.jfb.orderops.order.domain.model.Order
 import com.jfb.orderops.order.domain.model.OrderStatus
+import com.jfb.orderops.order.presentation.detail.components.OrderConsumptionPreviewSection
 import com.jfb.orderops.order.presentation.detail.components.OrderInfoSection
 import com.jfb.orderops.order.presentation.detail.components.OrderItemsSection
 import com.jfb.orderops.order.presentation.detail.components.OrderParticipantsSection
@@ -182,6 +183,12 @@ private fun OrderDetailContent(
             isLoading = isLoading,
             onAddItem = onAddItem
         )
+
+        uiState.consumptionPreview?.let { preview ->
+            OrderConsumptionPreviewSection(
+                preview = preview
+            )
+        }
     }
 
     Spacer(Modifier.height(24.dp))

@@ -8,6 +8,7 @@ import com.jfb.orderops.order.domain.usecase.CancelOrderUseCase
 import com.jfb.orderops.order.domain.usecase.CreateOrderParticipantUseCase
 import com.jfb.orderops.order.domain.usecase.FinishOrderUseCase
 import com.jfb.orderops.order.domain.usecase.GetOrderByIdUseCase
+import com.jfb.orderops.order.domain.usecase.GetParticipantConsumptionPreviewUseCase
 import com.jfb.orderops.order.domain.usecase.ListOrderParticipantsUseCase
 import com.jfb.orderops.order.domain.usecase.MarkOrderAsReadyUseCase
 import com.jfb.orderops.order.domain.usecase.PreviewPaymentSplitUseCase
@@ -27,7 +28,8 @@ class OrderDetailViewModelFactory(
     private val listProductsUseCase: ListProductsUseCase,
     private val listOrderParticipantsUseCase: ListOrderParticipantsUseCase,
     private val createOrderParticipantUseCase: CreateOrderParticipantUseCase,
-    private val assignOrderItemParticipantUseCase: AssignOrderItemParticipantUseCase
+    private val assignOrderItemParticipantUseCase: AssignOrderItemParticipantUseCase,
+    private val getParticipantConsumptionPreviewUseCase: GetParticipantConsumptionPreviewUseCase
 ) : ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -46,6 +48,7 @@ class OrderDetailViewModelFactory(
                 listOrderParticipantsUseCase = listOrderParticipantsUseCase,
                 createOrderParticipantUseCase = createOrderParticipantUseCase,
                 assignOrderItemParticipantUseCase = assignOrderItemParticipantUseCase,
+                getParticipantConsumptionPreviewUseCase = getParticipantConsumptionPreviewUseCase
             ) as T
         }
 

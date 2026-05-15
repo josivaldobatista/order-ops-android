@@ -14,6 +14,7 @@ import com.jfb.orderops.order.domain.model.CreateOrderItem
 import com.jfb.orderops.order.domain.model.Order
 import com.jfb.orderops.order.domain.model.OrderFulfillmentType
 import com.jfb.orderops.order.domain.model.OrderParticipant
+import com.jfb.orderops.order.domain.model.OrderParticipantConsumptionPreview
 import com.jfb.orderops.order.domain.model.OrderStatus
 import com.jfb.orderops.order.domain.repository.OrderRepository
 import retrofit2.HttpException
@@ -237,6 +238,22 @@ class OrderRepositoryImpl(
         } catch (e: Exception) {
             AppResult.Error(
                 message = e.message ?: "Erro ao atribuir participante ao item.",
+                throwable = e
+            )
+        }
+    }
+
+    override suspend fun getParticipantConsumptionPreview(
+        orderId: Long
+    ): AppResult<OrderParticipantConsumptionPreview> {
+        return try {
+            val preview = api.getParticipantConsumptionPreview(orderId)
+                .toDomain()
+
+            AppResult.Success(preview)
+        } catch (e: Exception) {
+            AppResult.Error(
+                message = e.message ?: "Erro ao carregar consumo por participante.",
                 throwable = e
             )
         }

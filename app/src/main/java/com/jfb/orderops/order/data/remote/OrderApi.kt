@@ -11,6 +11,7 @@ import retrofit2.http.Query
 import com.jfb.orderops.order.data.dto.AddOrderItemRequest
 import com.jfb.orderops.order.data.dto.AssignOrderItemParticipantRequest
 import com.jfb.orderops.order.data.dto.CreateOrderParticipantRequest
+import com.jfb.orderops.order.data.dto.OrderParticipantConsumptionPreviewResponse
 import com.jfb.orderops.order.data.dto.OrderParticipantResponse
 import com.jfb.orderops.order.data.dto.PaymentSplitPreviewRequest
 import com.jfb.orderops.order.data.dto.PaymentSplitPreviewResponse
@@ -89,4 +90,9 @@ interface OrderApi {
         @Path("itemId") itemId: Long,
         @Body request: AssignOrderItemParticipantRequest
     ): OrderResponse
+
+    @GET("api/v1/orders/{orderId}/participants/consumption-preview")
+    suspend fun getParticipantConsumptionPreview(
+        @Path("orderId") orderId: Long
+    ): OrderParticipantConsumptionPreviewResponse
 }

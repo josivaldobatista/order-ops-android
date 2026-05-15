@@ -10,6 +10,7 @@ import com.jfb.orderops.order.domain.usecase.CancelOrderUseCase
 import com.jfb.orderops.order.domain.usecase.CreateOrderParticipantUseCase
 import com.jfb.orderops.order.domain.usecase.FinishOrderUseCase
 import com.jfb.orderops.order.domain.usecase.GetOrderByIdUseCase
+import com.jfb.orderops.order.domain.usecase.GetParticipantConsumptionPreviewUseCase
 import com.jfb.orderops.order.domain.usecase.ListOrderParticipantsUseCase
 import com.jfb.orderops.order.domain.usecase.MarkOrderAsReadyUseCase
 import com.jfb.orderops.order.domain.usecase.RemoveOrderItemUseCase
@@ -36,7 +37,8 @@ class OrderDetailViewModel(
     private val listProductsUseCase: ListProductsUseCase,
     private val listOrderParticipantsUseCase: ListOrderParticipantsUseCase,
     private val createOrderParticipantUseCase: CreateOrderParticipantUseCase,
-    private val assignOrderItemParticipantUseCase: AssignOrderItemParticipantUseCase
+    private val assignOrderItemParticipantUseCase: AssignOrderItemParticipantUseCase,
+    private val getParticipantConsumptionPreviewUseCase: GetParticipantConsumptionPreviewUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(OrderDetailUiState())
@@ -78,10 +80,14 @@ class OrderDetailViewModel(
             val productsResult = listProductsUseCase.execute()
             val participantsResult = listOrderParticipantsUseCase.execute(orderId)
 
+            val consumptionPreviewResult =
+                getParticipantConsumptionPreviewUseCase.execute(orderId)
+
             when {
                 orderResult is AppResult.Success &&
                         productsResult is AppResult.Success &&
-                        participantsResult is AppResult.Success -> {
+                        participantsResult is AppResult.Success &&
+                        consumptionPreviewResult is AppResult.Success -> {
 
                     _uiState.update {
                         it.copy(
@@ -89,7 +95,17 @@ class OrderDetailViewModel(
                             order = orderResult.data,
                             products = productsResult.data,
                             participants = participantsResult.data,
+                            consumptionPreview = consumptionPreviewResult.data,
                             errorMessage = null
+                        )
+                    }
+                }
+
+                consumptionPreviewResult is AppResult.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = consumptionPreviewResult.message
                         )
                     }
                 }
@@ -117,6 +133,28 @@ class OrderDetailViewModel(
                         it.copy(isLoading = false)
                     }
                 }
+            }
+        }
+    }
+
+    private fun loadConsumptionPreview() {
+        viewModelScope.launch {
+            when (
+                val result = getParticipantConsumptionPreviewUseCase.execute(orderId)
+            ) {
+                is AppResult.Success -> {
+                    _uiState.update {
+                        it.copy(consumptionPreview = result.data)
+                    }
+                }
+
+                is AppResult.Error -> {
+                    _uiState.update {
+                        it.copy(errorMessage = result.message)
+                    }
+                }
+
+                AppResult.Loading -> Unit
             }
         }
     }
@@ -215,6 +253,7 @@ class OrderDetailViewModel(
 
                     // força reload do pedido (garante consistência)
                     loadOrder()
+                    loadConsumptionPreview()
 
                     _events.emit("Operação realizada com sucesso")
                 }

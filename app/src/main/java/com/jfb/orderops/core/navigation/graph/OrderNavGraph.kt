@@ -21,6 +21,7 @@ import com.jfb.orderops.order.domain.usecase.CreateOrderParticipantUseCase
 import com.jfb.orderops.order.domain.usecase.CreateOrderUseCase
 import com.jfb.orderops.order.domain.usecase.FinishOrderUseCase
 import com.jfb.orderops.order.domain.usecase.GetOrderByIdUseCase
+import com.jfb.orderops.order.domain.usecase.GetParticipantConsumptionPreviewUseCase
 import com.jfb.orderops.order.domain.usecase.ListOrderParticipantsUseCase
 import com.jfb.orderops.order.domain.usecase.MarkOrderAsReadyUseCase
 import com.jfb.orderops.order.domain.usecase.PreviewPaymentSplitUseCase
@@ -144,6 +145,9 @@ fun NavGraphBuilder.orderGraph(
         val assignOrderItemParticipantUseCase =
             AssignOrderItemParticipantUseCase(orderRepository)
 
+        val getParticipantConsumptionPreviewUseCase =
+            GetParticipantConsumptionPreviewUseCase(orderRepository)
+
         val listProductsUseCase = ListProductsUseCase(productRepository)
 
         val viewModel: OrderDetailViewModel = viewModel(
@@ -159,7 +163,8 @@ fun NavGraphBuilder.orderGraph(
                 listProductsUseCase = listProductsUseCase,
                 listOrderParticipantsUseCase = listOrderParticipantsUseCase,
                 createOrderParticipantUseCase = createOrderParticipantUseCase,
-                assignOrderItemParticipantUseCase = assignOrderItemParticipantUseCase
+                assignOrderItemParticipantUseCase = assignOrderItemParticipantUseCase,
+                getParticipantConsumptionPreviewUseCase = getParticipantConsumptionPreviewUseCase
             )
         )
 
