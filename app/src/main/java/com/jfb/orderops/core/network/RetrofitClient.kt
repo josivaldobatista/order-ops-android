@@ -15,7 +15,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
 
-    private const val BASE_URL = "http://10.221.105.47:8080/"
+    private const val BASE_URL = "http://10.221.105.180:8080/"
 
     fun createAuthApi(sessionStorage: SessionStorage): AuthApi {
 

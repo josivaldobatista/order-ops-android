@@ -55,6 +55,7 @@ fun OrderDetailScreen(
     events: Flow<String>,
     onNewParticipantNameChange: (String) -> Unit,
     onCreateParticipant: () -> Unit,
+    onAssignItemParticipant: (Long, Long?) -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -125,6 +126,7 @@ fun OrderDetailScreen(
                     uiState = uiState,
                     onNewParticipantNameChange = onNewParticipantNameChange,
                     onCreateParticipant = onCreateParticipant,
+                    onAssignItemParticipant = onAssignItemParticipant
                 )
             }
         }
@@ -144,7 +146,8 @@ private fun OrderDetailContent(
     onRemoveItem: (Long) -> Unit,
     uiState: OrderDetailUiState,
     onNewParticipantNameChange: (String) -> Unit,
-    onCreateParticipant: () -> Unit
+    onCreateParticipant: () -> Unit,
+    onAssignItemParticipant: (Long, Long?) -> Unit
 ) {
     OrderInfoSection(order = order)
 
@@ -185,8 +188,10 @@ private fun OrderDetailContent(
 
     OrderItemsSection(
         order = order,
+        participants = uiState.participants,
         isLoading = isLoading,
-        onRemoveItem = onRemoveItem
+        onRemoveItem = onRemoveItem,
+        onAssignItemParticipant = onAssignItemParticipant
     )
 
     Spacer(Modifier.height(24.dp))

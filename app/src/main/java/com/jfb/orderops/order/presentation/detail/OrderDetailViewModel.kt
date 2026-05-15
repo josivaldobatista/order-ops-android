@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.jfb.orderops.core.result.AppResult
 import com.jfb.orderops.order.domain.model.Order
 import com.jfb.orderops.order.domain.usecase.AddOrderItemUseCase
+import com.jfb.orderops.order.domain.usecase.AssignOrderItemParticipantUseCase
 import com.jfb.orderops.order.domain.usecase.CancelOrderUseCase
 import com.jfb.orderops.order.domain.usecase.CreateOrderParticipantUseCase
 import com.jfb.orderops.order.domain.usecase.FinishOrderUseCase
@@ -34,13 +35,27 @@ class OrderDetailViewModel(
     private val removeOrderItemUseCase: RemoveOrderItemUseCase,
     private val listProductsUseCase: ListProductsUseCase,
     private val listOrderParticipantsUseCase: ListOrderParticipantsUseCase,
-    private val createOrderParticipantUseCase: CreateOrderParticipantUseCase
+    private val createOrderParticipantUseCase: CreateOrderParticipantUseCase,
+    private val assignOrderItemParticipantUseCase: AssignOrderItemParticipantUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(OrderDetailUiState())
     val uiState: StateFlow<OrderDetailUiState> = _uiState.asStateFlow()
     private val _events = MutableSharedFlow<String>()
     val events = _events.asSharedFlow()
+
+    fun assignItemParticipant(
+        itemId: Long,
+        participantId: Long?
+    ) {
+        updateOrder {
+            assignOrderItemParticipantUseCase.execute(
+                orderId = orderId,
+                itemId = itemId,
+                participantId = participantId
+            )
+        }
+    }
 
     fun loadAll() {
         viewModelScope.launch {

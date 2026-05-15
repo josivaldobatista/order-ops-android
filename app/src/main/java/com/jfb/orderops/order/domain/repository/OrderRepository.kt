@@ -52,4 +52,10 @@ interface OrderRepository {
         orderId: Long,
         name: String
     ): AppResult<OrderParticipant>
+
+    suspend fun assignItemParticipant(
+        orderId: Long,
+        itemId: Long,
+        participantId: Long?
+    ): AppResult<Order>
 }

@@ -15,6 +15,7 @@ import com.jfb.orderops.core.network.RetrofitClient
 import com.jfb.orderops.core.storage.SessionStorage
 import com.jfb.orderops.order.data.repository.OrderRepositoryImpl
 import com.jfb.orderops.order.domain.usecase.AddOrderItemUseCase
+import com.jfb.orderops.order.domain.usecase.AssignOrderItemParticipantUseCase
 import com.jfb.orderops.order.domain.usecase.CancelOrderUseCase
 import com.jfb.orderops.order.domain.usecase.CreateOrderParticipantUseCase
 import com.jfb.orderops.order.domain.usecase.CreateOrderUseCase
@@ -140,6 +141,9 @@ fun NavGraphBuilder.orderGraph(
         val createOrderParticipantUseCase =
             CreateOrderParticipantUseCase(orderRepository)
 
+        val assignOrderItemParticipantUseCase =
+            AssignOrderItemParticipantUseCase(orderRepository)
+
         val listProductsUseCase = ListProductsUseCase(productRepository)
 
         val viewModel: OrderDetailViewModel = viewModel(
@@ -155,6 +159,7 @@ fun NavGraphBuilder.orderGraph(
                 listProductsUseCase = listProductsUseCase,
                 listOrderParticipantsUseCase = listOrderParticipantsUseCase,
                 createOrderParticipantUseCase = createOrderParticipantUseCase,
+                assignOrderItemParticipantUseCase = assignOrderItemParticipantUseCase
             )
         )
 
@@ -169,6 +174,7 @@ fun NavGraphBuilder.orderGraph(
             onRefresh = viewModel::loadAll,
             onNewParticipantNameChange = viewModel::onNewParticipantNameChange,
             onCreateParticipant = viewModel::createParticipant,
+            onAssignItemParticipant = viewModel::assignItemParticipant,
             onBack = {
                 navController.popBackStack()
             },

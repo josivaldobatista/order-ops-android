@@ -9,11 +9,13 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
 import com.jfb.orderops.order.data.dto.AddOrderItemRequest
+import com.jfb.orderops.order.data.dto.AssignOrderItemParticipantRequest
 import com.jfb.orderops.order.data.dto.CreateOrderParticipantRequest
 import com.jfb.orderops.order.data.dto.OrderParticipantResponse
 import com.jfb.orderops.order.data.dto.PaymentSplitPreviewRequest
 import com.jfb.orderops.order.data.dto.PaymentSplitPreviewResponse
 import retrofit2.http.DELETE
+import retrofit2.http.PUT
 
 interface OrderApi {
 
@@ -80,4 +82,11 @@ interface OrderApi {
         @Path("orderId") orderId: Long,
         @Body request: CreateOrderParticipantRequest
     ): OrderParticipantResponse
+
+    @PUT("api/v1/orders/{orderId}/items/{itemId}/participant")
+    suspend fun assignItemParticipant(
+        @Path("orderId") orderId: Long,
+        @Path("itemId") itemId: Long,
+        @Body request: AssignOrderItemParticipantRequest
+    ): OrderResponse
 }

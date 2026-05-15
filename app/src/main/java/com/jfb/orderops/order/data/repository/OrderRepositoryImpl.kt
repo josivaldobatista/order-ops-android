@@ -2,6 +2,7 @@ package com.jfb.orderops.order.data.repository
 
 import com.jfb.orderops.core.result.AppResult
 import com.jfb.orderops.order.data.dto.AddOrderItemRequest
+import com.jfb.orderops.order.data.dto.AssignOrderItemParticipantRequest
 import com.jfb.orderops.order.data.dto.CreateOrderItemRequest
 import com.jfb.orderops.order.data.dto.CreateOrderParticipantRequest
 import com.jfb.orderops.order.data.dto.CreateOrderRequest
@@ -213,6 +214,29 @@ class OrderRepositoryImpl(
         } catch (e: Exception) {
             AppResult.Error(
                 message = e.message ?: "Erro ao criar participante.",
+                throwable = e
+            )
+        }
+    }
+
+    override suspend fun assignItemParticipant(
+        orderId: Long,
+        itemId: Long,
+        participantId: Long?
+    ): AppResult<Order> {
+        return try {
+            val order = api.assignItemParticipant(
+                orderId = orderId,
+                itemId = itemId,
+                request = AssignOrderItemParticipantRequest(
+                    participantId = participantId
+                )
+            ).toDomain()
+
+            AppResult.Success(order)
+        } catch (e: Exception) {
+            AppResult.Error(
+                message = e.message ?: "Erro ao atribuir participante ao item.",
                 throwable = e
             )
         }
