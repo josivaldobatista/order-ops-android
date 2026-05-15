@@ -1,6 +1,8 @@
 package com.jfb.orderops.order.presentation.detail.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.jfb.orderops.order.domain.model.Order
@@ -33,78 +36,104 @@ fun OrderItemsSection(
     onRemoveItem: (Long) -> Unit,
     onAssignItemParticipant: (Long, Long?) -> Unit
 ) {
-    Text(
-        text = "Itens",
-        style = MaterialTheme.typography.titleLarge,
-        color = MaterialTheme.colorScheme.onBackground
-    )
+    var expanded by remember { mutableStateOf(false) }
 
-    Spacer(Modifier.height(8.dp))
-
-    if (order.items.isEmpty()) {
-        Text(
-            text = "Nenhum item no pedido.",
-            color = MaterialTheme.colorScheme.onBackground
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface
         )
-        return
-    }
-
-    order.items.forEach { item ->
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.onSurface
-            )
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp)
         ) {
-            Column(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(12.dp)
+                    .clickable { expanded = !expanded },
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = item.productName,
-                    style = MaterialTheme.typography.titleMedium
+                    text = if (expanded) {
+                        "▲ Itens do pedido (${order.items.size})"
+                    } else {
+                        "▼ Itens do pedido (${order.items.size})"
+                    },
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
+            }
 
-                Spacer(Modifier.height(4.dp))
-
-                Text("Quantidade: ${item.quantity}")
-                Text("Unitário: R$ ${"%.2f".format(item.unitPrice)}")
-                Text("Subtotal: R$ ${"%.2f".format(item.totalPrice)}")
-
+            if (expanded) {
                 Spacer(Modifier.height(12.dp))
 
-                if (order.status.canEditItems()) {
-                    ItemParticipantDropdown(
-                        selectedParticipantId = item.participantId,
-                        participants = participants,
-                        isLoading = isLoading,
-                        onSelected = { participantId ->
-                            onAssignItemParticipant(item.id, participantId)
-                        }
+                if (order.items.isEmpty()) {
+                    Text(
+                        text = "Nenhum item no pedido.",
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 } else {
-                    Text(
-                        text = "Consumo: ${item.participantName ?: "Não atribuído"}",
-                        color = if (item.participantId == null) {
-                            MaterialTheme.colorScheme.error
-                        } else {
-                            MaterialTheme.colorScheme.primary
+                    order.items.forEach { item ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp)
+                            ) {
+                                Text(
+                                    text = item.productName,
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+
+                                Spacer(Modifier.height(4.dp))
+
+                                Text("Quantidade: ${item.quantity}")
+                                Text("Unitário: R$ ${"%.2f".format(item.unitPrice)}")
+                                Text("Subtotal: R$ ${"%.2f".format(item.totalPrice)}")
+
+                                Spacer(Modifier.height(12.dp))
+
+                                if (order.status.canEditItems()) {
+                                    ItemParticipantDropdown(
+                                        selectedParticipantId = item.participantId,
+                                        participants = participants,
+                                        isLoading = isLoading,
+                                        onSelected = { participantId ->
+                                            onAssignItemParticipant(item.id, participantId)
+                                        }
+                                    )
+                                } else {
+                                    Text(
+                                        text = "Consumo: ${item.participantName ?: "Não atribuído"}",
+                                        color = if (item.participantId == null) {
+                                            MaterialTheme.colorScheme.error
+                                        } else {
+                                            MaterialTheme.colorScheme.primary
+                                        }
+                                    )
+                                }
+
+                                if (order.status.canEditItems()) {
+                                    Spacer(Modifier.height(8.dp))
+
+                                    TextButton(
+                                        onClick = { onRemoveItem(item.id) },
+                                        enabled = !isLoading
+                                    ) {
+                                        Text("Remover")
+                                    }
+                                }
+                            }
                         }
-                    )
-                }
-
-                if (order.status.canEditItems()) {
-                    Spacer(Modifier.height(8.dp))
-
-                    TextButton(
-                        onClick = { onRemoveItem(item.id) },
-                        enabled = !isLoading
-                    ) {
-                        Text("Remover")
                     }
                 }
             }
@@ -129,8 +158,7 @@ private fun ItemParticipantDropdown(
 
     Text(
         text = "Consumo",
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.onSurface
+        style = MaterialTheme.typography.labelLarge
     )
 
     Spacer(Modifier.height(4.dp))
@@ -158,9 +186,7 @@ private fun ItemParticipantDropdown(
             onDismissRequest = { expanded = false }
         ) {
             DropdownMenuItem(
-                text = {
-                    Text("Não atribuído")
-                },
+                text = { Text("Não atribuído") },
                 onClick = {
                     expanded = false
                     onSelected(null)
@@ -170,9 +196,7 @@ private fun ItemParticipantDropdown(
 
             participants.forEach { participant ->
                 DropdownMenuItem(
-                    text = {
-                        Text(participant.name)
-                    },
+                    text = { Text(participant.name) },
                     onClick = {
                         expanded = false
                         onSelected(participant.id)

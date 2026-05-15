@@ -1,10 +1,25 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
 }
 
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) {
+        file.inputStream().use { load(it) }
+    }
+}
+
+val baseUrl = localProperties.getProperty(
+    "BASE_URL",
+    "http://localhost:8080/"
+)
+
 android {
     namespace = "com.jfb.orderops"
+
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -19,6 +34,12 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField(
+            "String",
+            "BASE_URL",
+            "\"$baseUrl\""
+        )
     }
 
     buildTypes {
@@ -30,12 +51,15 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

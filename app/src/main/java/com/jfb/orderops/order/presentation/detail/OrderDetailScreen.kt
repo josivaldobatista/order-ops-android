@@ -17,6 +17,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -32,7 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.jfb.orderops.order.domain.model.Order
 import com.jfb.orderops.order.domain.model.OrderStatus
-import com.jfb.orderops.order.presentation.detail.components.OrderConsumptionPreviewSection
+import com.jfb.orderops.order.presentation.detail.components.OrderConsumptionPreviewBottomSheet
 import com.jfb.orderops.order.presentation.detail.components.OrderInfoSection
 import com.jfb.orderops.order.presentation.detail.components.OrderItemsSection
 import com.jfb.orderops.order.presentation.detail.components.OrderParticipantsSection
@@ -151,6 +152,7 @@ private fun OrderDetailContent(
     onAssignItemParticipant: (Long, Long?) -> Unit
 ) {
     OrderInfoSection(order = order)
+    var showConsumptionSheet by remember { mutableStateOf(false) }
 
     Spacer(Modifier.height(16.dp))
 
@@ -184,11 +186,6 @@ private fun OrderDetailContent(
             onAddItem = onAddItem
         )
 
-        uiState.consumptionPreview?.let { preview ->
-            OrderConsumptionPreviewSection(
-                preview = preview
-            )
-        }
     }
 
     Spacer(Modifier.height(24.dp))
@@ -200,6 +197,27 @@ private fun OrderDetailContent(
         onRemoveItem = onRemoveItem,
         onAssignItemParticipant = onAssignItemParticipant
     )
+
+    Spacer(Modifier.height(16.dp))
+
+    OutlinedButton(
+        onClick = { showConsumptionSheet = true },
+        enabled = uiState.consumptionPreview != null,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text("Ver consumo por participante")
+    }
+
+    if (showConsumptionSheet) {
+        uiState.consumptionPreview?.let { preview ->
+            OrderConsumptionPreviewBottomSheet(
+                preview = preview,
+                onDismiss = {
+                    showConsumptionSheet = false
+                }
+            )
+        }
+    }
 
     Spacer(Modifier.height(24.dp))
 

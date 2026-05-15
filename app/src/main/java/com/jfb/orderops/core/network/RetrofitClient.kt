@@ -12,10 +12,11 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import com.jfb.orderops.BuildConfig
 
 object RetrofitClient {
 
-    private const val BASE_URL = "http://10.221.105.180:8080/"
+    private val BASE_URL = BuildConfig.BASE_URL
 
     fun createAuthApi(sessionStorage: SessionStorage): AuthApi {
 
