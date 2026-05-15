@@ -1,8 +1,8 @@
 package com.jfb.orderops.order.presentation.detail.components
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -21,84 +21,96 @@ fun OrderStatusActionsSection(
     onFinish: () -> Unit,
     onCancel: () -> Unit
 ) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+
+    when (status) {
+
+        OrderStatus.OPEN -> {
+
+            ActionButtonsRow(
+                primaryText = "Preparo",
+                secondaryText = "Cancelar",
+                isLoading = isLoading,
+                onPrimaryClick = onSendToPreparation,
+                onSecondaryClick = onCancel
+            )
+        }
+
+        OrderStatus.IN_PREPARATION -> {
+
+            ActionButtonsRow(
+                primaryText = "Pronto",
+                secondaryText = "Cancelar",
+                isLoading = isLoading,
+                onPrimaryClick = onMarkAsReady,
+                onSecondaryClick = onCancel
+            )
+        }
+
+        OrderStatus.READY -> {
+
+            ActionButtonsRow(
+                primaryText = "Pagamento",
+                secondaryText = "Cancelar",
+                isLoading = isLoading,
+                onPrimaryClick = onFinish,
+                onSecondaryClick = onCancel
+            )
+        }
+
+        OrderStatus.FINISHED -> {
+
+            Text(
+                text = "Pedido finalizado.",
+                color = MaterialTheme.colorScheme.onBackground
+            )
+        }
+
+        OrderStatus.CANCELLED -> {
+
+            Text(
+                text = "Pedido cancelado.",
+                color = MaterialTheme.colorScheme.onBackground
+            )
+        }
+
+        OrderStatus.UNKNOWN -> {
+
+            Text(
+                text = "Status desconhecido.",
+                color = MaterialTheme.colorScheme.onBackground
+            )
+        }
+    }
+}
+
+@Composable
+private fun ActionButtonsRow(
+    primaryText: String,
+    secondaryText: String,
+    isLoading: Boolean,
+    onPrimaryClick: () -> Unit,
+    onSecondaryClick: () -> Unit
+) {
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        when (status) {
-            OrderStatus.OPEN -> {
-                Button(
-                    onClick = onSendToPreparation,
-                    enabled = !isLoading,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Enviar para preparo")
-                }
 
-                OutlinedButton(
-                    onClick = onCancel,
-                    enabled = !isLoading,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Cancelar pedido")
-                }
-            }
+        Button(
+            onClick = onPrimaryClick,
+            enabled = !isLoading,
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(primaryText)
+        }
 
-            OrderStatus.IN_PREPARATION -> {
-                Button(
-                    onClick = onMarkAsReady,
-                    enabled = !isLoading,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Marcar como pronto")
-                }
-
-                OutlinedButton(
-                    onClick = onCancel,
-                    enabled = !isLoading,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Cancelar pedido")
-                }
-            }
-
-            OrderStatus.READY -> {
-                Button(
-                    onClick = onFinish,
-                    enabled = !isLoading,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Pagar pedido")
-                }
-
-                OutlinedButton(
-                    onClick = onCancel,
-                    enabled = !isLoading,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Cancelar pedido")
-                }
-            }
-
-            OrderStatus.FINISHED -> {
-                Text(
-                    text = "Pedido finalizado.",
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            }
-
-            OrderStatus.CANCELLED -> {
-                Text(
-                    text = "Pedido cancelado.",
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            }
-
-            OrderStatus.UNKNOWN -> {
-                Text(
-                    text = "Status desconhecido.",
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            }
+        OutlinedButton(
+            onClick = onSecondaryClick,
+            enabled = !isLoading,
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(secondaryText)
         }
     }
 }

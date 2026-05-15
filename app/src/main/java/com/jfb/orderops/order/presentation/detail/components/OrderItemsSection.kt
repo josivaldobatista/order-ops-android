@@ -36,7 +36,13 @@ fun OrderItemsSection(
     onRemoveItem: (Long) -> Unit,
     onAssignItemParticipant: (Long, Long?) -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    val hasUnassignedItems = order.items.any {
+        it.participantId == null
+    }
+
+    var expanded by remember(order.items) {
+        mutableStateOf(hasUnassignedItems)
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),

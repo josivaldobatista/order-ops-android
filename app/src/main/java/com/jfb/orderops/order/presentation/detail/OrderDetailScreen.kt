@@ -200,12 +200,36 @@ private fun OrderDetailContent(
 
     Spacer(Modifier.height(16.dp))
 
+    val unassignedCount = uiState.consumptionPreview
+        ?.unassignedItems
+        ?.size
+        ?: 0
+
+    val participantCount = uiState.consumptionPreview
+        ?.participants
+        ?.size
+        ?: 0
+
+    val consumptionButtonText = when {
+        unassignedCount > 0 -> {
+            "Ver consumo • $unassignedCount sem participante"
+        }
+
+        participantCount > 0 -> {
+            "Ver consumo • $participantCount participante(s)"
+        }
+
+        else -> {
+            "Ver consumo por participante"
+        }
+    }
+
     OutlinedButton(
         onClick = { showConsumptionSheet = true },
         enabled = uiState.consumptionPreview != null,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Text("Ver consumo por participante")
+        Text(consumptionButtonText)
     }
 
     if (showConsumptionSheet) {
