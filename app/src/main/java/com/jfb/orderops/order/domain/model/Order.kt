@@ -15,7 +15,9 @@ data class OrderItem(
     val productName: String,
     val unitPrice: Double,
     val quantity: Int,
-    val totalPrice: Double
+    val totalPrice: Double,
+    val participantId: Long?,
+    val participantName: String?
 )
 
 enum class OrderStatus {

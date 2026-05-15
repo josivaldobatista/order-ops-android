@@ -7,6 +7,6 @@ data class OrderItemResponse(
     val unitPrice: Double,
     val quantity: Int,
     val totalPrice: Double,
-    val createdAt: String,
-    val updatedAt: String
+    val participantId: Long?,
+    val participantName: String?
 )

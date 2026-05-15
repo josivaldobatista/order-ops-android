@@ -23,7 +23,9 @@ fun OrderItemResponse.toDomain(): OrderItem {
         productName = productName,
         unitPrice = unitPrice,
         quantity = quantity,
-        totalPrice = totalPrice
+        totalPrice = totalPrice,
+        participantId = participantId,
+        participantName = participantName
     )
 }
 

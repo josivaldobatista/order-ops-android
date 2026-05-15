@@ -53,33 +53,35 @@ fun OrderItemsSection(
                     contentColor = MaterialTheme.colorScheme.onSurface
                 )
             ) {
-
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                        .padding(12.dp)
                 ) {
+                    Text(
+                        text = item.productName,
+                        style = MaterialTheme.typography.titleMedium
+                    )
 
-                    Column {
+                    Spacer(Modifier.height(4.dp))
 
-                        Text(
-                            text = item.productName,
-                            style = MaterialTheme.typography.titleMedium
-                        )
+                    Text("Quantidade: ${item.quantity}")
+                    Text("Unitário: R$ ${"%.2f".format(item.unitPrice)}")
+                    Text("Subtotal: R$ ${"%.2f".format(item.totalPrice)}")
 
-                        Text("Quantidade: ${item.quantity}")
+                    Spacer(Modifier.height(8.dp))
 
-                        Text(
-                            "Unitário: R$ ${"%.2f".format(item.unitPrice)}"
-                        )
-
-                        Text(
-                            "Subtotal: R$ ${"%.2f".format(item.totalPrice)}"
-                        )
-                    }
+                    Text(
+                        text = "Consumo: ${item.participantName ?: "Não atribuído"}",
+                        color = if (item.participantId == null) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.primary
+                        }
+                    )
 
                     if (order.status.canEditItems()) {
+                        Spacer(Modifier.height(8.dp))
 
                         TextButton(
                             onClick = { onRemoveItem(item.id) },
