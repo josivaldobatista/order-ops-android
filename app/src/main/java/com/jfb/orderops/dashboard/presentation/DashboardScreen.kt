@@ -3,14 +3,12 @@ package com.jfb.orderops.dashboard.presentation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,6 +27,10 @@ import androidx.navigation.NavController
 import com.jfb.orderops.core.navigation.AppRoute
 import com.jfb.orderops.core.network.RetrofitClient
 import com.jfb.orderops.core.storage.SessionStorage
+import com.jfb.orderops.core.ui.components.ComandexScaffold
+import com.jfb.orderops.core.ui.components.ComandexTabBar
+import com.jfb.orderops.core.ui.components.DashboardHeader
+import com.jfb.orderops.core.ui.components.DashboardMetricCard
 import com.jfb.orderops.order.data.repository.OrderRepositoryImpl
 import com.jfb.orderops.order.domain.usecase.ListOrdersUseCase
 import com.jfb.orderops.order.presentation.list.OrdersScreen
@@ -45,7 +47,6 @@ import com.jfb.orderops.product.domain.usecase.ListProductsUseCase
 import com.jfb.orderops.product.presentation.list.ProductsScreen
 import com.jfb.orderops.product.presentation.list.ProductsViewModel
 import com.jfb.orderops.product.presentation.list.ProductsViewModelFactory
-import com.jfb.orderops.product.presentation.state.ProductsUiState
 import com.jfb.orderops.serviceTable.data.repository.ServiceTableRepositoryImpl
 import com.jfb.orderops.serviceTable.domain.usecase.ListServiceTablesUseCase
 import com.jfb.orderops.serviceTable.presentation.list.ServiceTablesScreen
@@ -110,74 +111,73 @@ fun DashboardScreen(
         }
     }
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
-    ) {
+    ComandexScaffold {
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 32.dp)
+                .padding(top = 16.dp)
         ) {
+
+            DashboardHeader(
+                onLogout = onLogout
+            )
+
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        start = 16.dp,
-                        end = 16.dp,
-                        top = 12.dp,
-                        bottom = 16.dp
-                    ),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text("OrderOps", style = MaterialTheme.typography.titleLarge)
 
-                Button(onClick = onLogout) {
-                    Text("Logout")
-                }
+                DashboardMetricCard(
+                    title = "Mesas",
+                    value = serviceTablesUiState.serviceTables.size.toString(),
+                    modifier = Modifier.weight(1f)
+                )
+
+                DashboardMetricCard(
+                    title = "Pedidos",
+                    value = ordersUiState.orders.size.toString(),
+                    modifier = Modifier.weight(1f)
+                )
             }
 
-            TabRow(selectedTabIndex = selectedTab) {
-                Tab(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 }
-                ) {
-                    Text("Mesas")
-                }
+            Spacer(modifier = Modifier.height(12.dp))
 
-                Tab(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 }
-                ) {
-                    Text("Pedidos")
-                }
+            DashboardMetricCard(
+                title = "Produtos",
+                value = productsUiState.products.size.toString(),
+                modifier = Modifier.fillMaxWidth()
+            )
 
-                Tab(
-                    selected = selectedTab == 2,
-                    onClick = { selectedTab = 2 }
-                ) {
-                    Text("Produtos")
-                }
+            Spacer(modifier = Modifier.height(24.dp))
 
-                Tab(
-                    selected = selectedTab == 3,
-                    onClick = { selectedTab = 3 }
-                ) {
-                    Text("Relatórios")
-                }
-            }
+            ComandexTabBar(
+                tabs = listOf(
+                    "Mesas",
+                    "Pedidos",
+                    "Produtos",
+                    "Relatórios"
+                ),
+                selectedIndex = selectedTab,
+                onSelected = { selectedTab = it }
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
 
             when (selectedTab) {
+
                 0 -> Column(
                     modifier = Modifier.fillMaxSize()
                 ) {
+
                     Button(
                         onClick = {
-                            navController.navigate(AppRoute.CreateServiceTable.route)
+                            navController.navigate(
+                                AppRoute.CreateServiceTable.route
+                            )
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp)
+                            .padding(bottom = 16.dp)
                     ) {
                         Text("Nova mesa")
                     }
@@ -195,7 +195,9 @@ fun DashboardScreen(
 
                 1 -> OrdersScreen(
                     uiState = ordersUiState,
-                    onRefresh = { ordersViewModel.loadOrders() },
+                    onRefresh = {
+                        ordersViewModel.loadOrders()
+                    },
                     onStatusSelected = { status ->
                         ordersViewModel.loadOrders(status)
                     },
@@ -206,24 +208,25 @@ fun DashboardScreen(
                     }
                 )
 
-                2 -> Column(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-
-                    ProductsScreen(
-                        uiState = productsUiState,
-                        onRefresh = productsViewModel::loadProducts,
-                        onCreateProduct = {
-                            navController.navigate(AppRoute.CreateProduct.route)
-                        },
-                        onCreateCategory = {
-                            navController.navigate(AppRoute.CreateCategory.route)
-                        },
-                        onOpenCategories = {
-                            navController.navigate(AppRoute.Categories.route)
-                        }
-                    )
-                }
+                2 -> ProductsScreen(
+                    uiState = productsUiState,
+                    onRefresh = productsViewModel::loadProducts,
+                    onCreateProduct = {
+                        navController.navigate(
+                            AppRoute.CreateProduct.route
+                        )
+                    },
+                    onCreateCategory = {
+                        navController.navigate(
+                            AppRoute.CreateCategory.route
+                        )
+                    },
+                    onOpenCategories = {
+                        navController.navigate(
+                            AppRoute.Categories.route
+                        )
+                    }
+                )
 
                 3 -> PaymentReportScreen(
                     uiState = reportUiState,
