@@ -2,15 +2,20 @@ package com.jfb.orderops.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+val OrderOpsBackground = Color(0xFF111827)
+val OrderOpsBackgroundTop = Color(0xFF1F2933)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+val OrderOpsSurface = Color(0xFF323F4B)
+val OrderOpsSurfaceElevated = Color(0xFF3E4C59)
 
-val Background = Color(0xFFF5F5F5)
-val Surface = Color(0xFFFFFFFF)
-val SurfaceDark = Color(0xFF2C2C2C)
-val Primary = Color(0xFF8FAADC)
+val OrderOpsPrimary = Color(0xFFE76F51)
+val OrderOpsPrimaryVariant = Color(0xFFF4A261)
+
+val OrderOpsSuccess = Color(0xFF2A9D8F)
+val OrderOpsError = Color(0xFFE63946)
+val OrderOpsWarning = Color(0xFFF4A261)
+
+val OrderOpsTextPrimary = Color(0xFFF8F9FA)
+val OrderOpsTextSecondary = Color(0xFFBCCCDC)
+
+val OrderOpsOutline = Color(0xFFBCCCDC).copy(alpha = 0.35f)

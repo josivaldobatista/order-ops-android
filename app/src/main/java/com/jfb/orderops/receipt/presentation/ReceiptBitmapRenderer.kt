@@ -118,12 +118,43 @@ object ReceiptBitmapRenderer {
             addCenter("CONSUMO NO LOCAL")
             separator()
 
-            addLeft("ITENS", bold = true)
-            order.items.forEach { item ->
-                addLeftRight(
-                    left = "${item.quantity}x ${item.productName}",
-                    right = money(item.totalPrice)
-                )
+            val hasParticipants = order.items.any { it.participantId != null }
+
+            if (hasParticipants) {
+                addLeft("CONSUMO POR PARTICIPANTE", bold = true)
+
+                val groupedItems = order.items.groupBy {
+                    it.participantName ?: "SEM PARTICIPANTE"
+                }
+
+                groupedItems.forEach { (participantName, items) ->
+                    addBlank()
+                    addLeft(participantName.uppercase(), bold = true)
+
+                    items.forEach { item ->
+                        addLeftRight(
+                            left = "${item.quantity}x ${item.productName}",
+                            right = money(item.totalPrice)
+                        )
+                    }
+
+                    val participantTotal = items.sumOf { it.totalPrice }
+
+                    addLeftRight(
+                        left = "Total $participantName",
+                        right = money(participantTotal),
+                        bold = true
+                    )
+                }
+            } else {
+                addLeft("ITENS", bold = true)
+
+                order.items.forEach { item ->
+                    addLeftRight(
+                        left = "${item.quantity}x ${item.productName}",
+                        right = money(item.totalPrice)
+                    )
+                }
             }
 
             separator()

@@ -30,6 +30,8 @@ fun ReceiptScreen(
     onShare: () -> Unit,
     onClose: () -> Unit
 ) {
+    val receiptScrollState = rememberScrollState()
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -53,7 +55,9 @@ fun ReceiptScreen(
                     .weight(1f)
             ) {
                 Column(
-                    modifier = Modifier.verticalScroll(rememberScrollState())
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(receiptScrollState)
                 ) {
                     Image(
                         bitmap = receiptBitmap.asImageBitmap(),
