@@ -8,15 +8,19 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.jfb.orderops.R
 
 @Composable
 fun ComandexBottomBar(
@@ -47,17 +51,11 @@ fun ComandexBottomBar(
                     .padding(horizontal = 10.dp, vertical = 6.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = when (label) {
-                        "Home" -> "⌂"
-                        "Mesas" -> "▱"
-                        "Pedidos" -> "☰"
-                        "Produtos" -> "▣"
-                        "Relatórios" -> "▥"
-                        else -> "•"
-                    },
-                    color = if (selected) colors.primary else colors.onSurfaceVariant,
-                    style = MaterialTheme.typography.titleMedium
+                Icon(
+                    painter = painterResource(bottomBarIcon(label)),
+                    contentDescription = label,
+                    tint = if (selected) colors.primary else colors.onSurfaceVariant,
+                    modifier = Modifier.size(22.dp)
                 )
 
                 Text(
@@ -68,5 +66,16 @@ fun ComandexBottomBar(
                 )
             }
         }
+    }
+}
+
+private fun bottomBarIcon(label: String): Int {
+    return when (label) {
+        "Home" -> R.drawable.ic_home
+        "Mesas" -> R.drawable.ic_turntable
+        "Pedidos" -> R.drawable.ic_receipt
+        "Produtos" -> R.drawable.ic_basket
+        "Relatórios", "Relat." -> R.drawable.ic_receipt_text
+        else -> R.drawable.ic_home
     }
 }

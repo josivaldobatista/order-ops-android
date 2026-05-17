@@ -128,7 +128,12 @@ fun DashboardScreen(
                         onOpenTables = { selectedTab = DashboardSection.Tables.ordinal },
                         onOpenOrders = { selectedTab = DashboardSection.Orders.ordinal },
                         onOpenProducts = { selectedTab = DashboardSection.Products.ordinal },
-                        onOpenReports = { selectedTab = DashboardSection.Reports.ordinal }
+                        onOpenReports = { selectedTab = DashboardSection.Reports.ordinal },
+                        onOrderClick = { orderId ->
+                            navController.navigate(
+                                AppRoute.OrderDetail.createRoute(orderId)
+                            )
+                        }
                     )
 
                     DashboardSection.Tables -> Column(

@@ -7,5 +7,5 @@ enum class DashboardSection(
     Tables("Mesas"),
     Orders("Pedidos"),
     Products("Produtos"),
-    Reports("Relatórios")
+    Reports("Vendas")
 }

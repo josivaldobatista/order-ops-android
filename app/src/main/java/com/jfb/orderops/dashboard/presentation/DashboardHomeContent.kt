@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.jfb.orderops.core.ui.components.DashboardMetricCard
+import com.jfb.orderops.R
 
 @Composable
 fun DashboardHomeContent(
@@ -19,6 +20,7 @@ fun DashboardHomeContent(
     onOpenOrders: () -> Unit,
     onOpenProducts: () -> Unit,
     onOpenReports: () -> Unit,
+    onOrderClick: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
@@ -27,8 +29,8 @@ fun DashboardHomeContent(
             DashboardMetricCard(
                 title = "Mesas",
                 value = tablesCount.toString(),
-                subtitle = "Toque para gerenciar",
-                icon = "▱",
+                subtitle = "Gerenciar",
+                iconRes = R.drawable.ic_turntable,
                 iconColor = Color(0xFFB94A2E),
                 arrowColor = MaterialTheme.colorScheme.primary,
                 onClick = onOpenTables,
@@ -39,7 +41,7 @@ fun DashboardHomeContent(
                 title = "Pedidos",
                 value = ordersCount.toString(),
                 subtitle = "Toque para acompanhar",
-                icon = "☰",
+                iconRes = R.drawable.ic_receipt,
                 iconColor = Color(0xFF1D4ED8),
                 arrowColor = Color(0xFF3B82F6),
                 onClick = onOpenOrders,
@@ -54,7 +56,7 @@ fun DashboardHomeContent(
                 title = "Produtos",
                 value = productsCount.toString(),
                 subtitle = "Cardápio",
-                icon = "▢",
+                iconRes = R.drawable.ic_receipt_text,
                 iconColor = Color(0xFF2A9D8F),
                 arrowColor = Color(0xFF2A9D8F),
                 onClick = onOpenProducts,
@@ -65,7 +67,7 @@ fun DashboardHomeContent(
                 title = "Relatórios",
                 value = "Ver",
                 subtitle = "Desempenho",
-                icon = "▥",
+                iconRes = R.drawable.ic_chart_column,
                 iconColor = Color(0xFF6D3BBF),
                 arrowColor = Color(0xFF9B5DE5),
                 onClick = onOpenReports,
@@ -95,12 +97,37 @@ fun DashboardHomeContent(
         }
 
         Spacer(modifier = Modifier.height(12.dp))
+        RecentOrderPreviewCard(
+            orderId = 1254L,
+            code = "#1254",
+            table = "Mesa 04",
+            status = "Em preparo",
+            value = "R$ 87,50",
+            time = "14:28",
+            onClick = onOrderClick
+        )
 
-        RecentOrderPreviewCard("#1254", "Mesa 04", "Em preparo", "R$ 87,50", "14:28")
         Spacer(modifier = Modifier.height(8.dp))
-        RecentOrderPreviewCard("#1253", "Mesa 02", "Aguardando", "R$ 65,00", "14:20")
+        RecentOrderPreviewCard(
+            orderId = 1253L,
+            code = "#1253",
+            table = "Mesa 02",
+            status = "Aguardando",
+            value = "R$ 65,00",
+            time = "14:20",
+            onClick = onOrderClick
+        )
+
         Spacer(modifier = Modifier.height(8.dp))
-        RecentOrderPreviewCard("#1252", "Mesa 07", "Pronto", "R$ 120,00", "14:15")
+        RecentOrderPreviewCard(
+            orderId = 1252L,
+            code = "#1252",
+            table = "Mesa 07",
+            status = "Pronto",
+            value = "R$ 120,00",
+            time = "14:15",
+            onClick = onOrderClick
+        )
 
         Spacer(modifier = Modifier.height(24.dp))
     }

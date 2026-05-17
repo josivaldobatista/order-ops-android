@@ -1,6 +1,7 @@
 package com.jfb.orderops.dashboard.presentation
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,11 +19,13 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun RecentOrderPreviewCard(
+    orderId: Long,
     code: String,
     table: String,
     status: String,
     value: String,
     time: String,
+    onClick: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
@@ -32,6 +35,7 @@ fun RecentOrderPreviewCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(18.dp))
             .background(colors.surface)
+            .clickable { onClick(orderId) }
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
