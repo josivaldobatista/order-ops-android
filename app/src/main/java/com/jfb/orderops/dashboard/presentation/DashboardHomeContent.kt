@@ -1,6 +1,11 @@
 package com.jfb.orderops.dashboard.presentation
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -8,19 +13,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.jfb.orderops.core.ui.components.DashboardMetricCard
 import com.jfb.orderops.R
+import com.jfb.orderops.core.ui.components.DashboardMetricCard
+import com.jfb.orderops.order.domain.model.Order
+import com.jfb.orderops.order.domain.model.OrderFulfillmentType
+import com.jfb.orderops.order.domain.model.OrderStatus
 
 @Composable
 fun DashboardHomeContent(
     tablesCount: Int,
     ordersCount: Int,
     productsCount: Int,
+    recentOrders: List<Order>,
     onOpenTables: () -> Unit,
     onOpenOrders: () -> Unit,
     onOpenProducts: () -> Unit,
     onOpenReports: () -> Unit,
     onOrderClick: (Long) -> Unit,
+    onOpenAllOrders: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
@@ -40,7 +50,7 @@ fun DashboardHomeContent(
             DashboardMetricCard(
                 title = "Pedidos",
                 value = ordersCount.toString(),
-                subtitle = "Toque para acompanhar",
+                subtitle = "Acompanhar",
                 iconRes = R.drawable.ic_receipt,
                 iconColor = Color(0xFF1D4ED8),
                 arrowColor = Color(0xFF3B82F6),
@@ -97,38 +107,75 @@ fun DashboardHomeContent(
         }
 
         Spacer(modifier = Modifier.height(12.dp))
-        RecentOrderPreviewCard(
-            orderId = 1254L,
-            code = "#1254",
-            table = "Mesa 04",
-            status = "Em preparo",
-            value = "R$ 87,50",
-            time = "14:28",
-            onClick = onOrderClick
-        )
 
-        Spacer(modifier = Modifier.height(8.dp))
-        RecentOrderPreviewCard(
-            orderId = 1253L,
-            code = "#1253",
-            table = "Mesa 02",
-            status = "Aguardando",
-            value = "R$ 65,00",
-            time = "14:20",
-            onClick = onOrderClick
-        )
+        if (recentOrders.isEmpty()) {
+            Text(
+                text = "Nenhum pedido recente.",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        } else {
+            recentOrders.take(3).forEachIndexed { index, order ->
+                RecentOrderPreviewCard(
+                    orderId = order.id,
+                    code = "#${order.id}",
+                    table = order.displayLocation(),
+                    status = order.status.displayLabel(),
+                    value = order.totalAmount.toCurrencyText(),
+                    time = "",
+                    fulfillmentIconRes = order.fulfillmentIcon(),
+                    fulfillmentColor = order.fulfillmentColor(),
+                    onClick = onOrderClick
+                )
 
-        Spacer(modifier = Modifier.height(8.dp))
-        RecentOrderPreviewCard(
-            orderId = 1252L,
-            code = "#1252",
-            table = "Mesa 07",
-            status = "Pronto",
-            value = "R$ 120,00",
-            time = "14:15",
-            onClick = onOrderClick
-        )
+                if (index < recentOrders.take(3).lastIndex) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
+    }
+}
+
+private fun Order.displayLocation(): String {
+    return when {
+        serviceTableId != null -> "Mesa $serviceTableId"
+        fulfillmentType == OrderFulfillmentType.DELIVERY -> "Entrega"
+        fulfillmentType == OrderFulfillmentType.TAKEOUT -> "Retirada"
+        else -> fulfillmentType.label
+    }
+}
+
+private fun OrderStatus.displayLabel(): String {
+    return when (this) {
+        OrderStatus.OPEN -> "Aberto"
+        OrderStatus.IN_PREPARATION -> "Em preparo"
+        OrderStatus.READY -> "Pronto"
+        OrderStatus.FINISHED -> "Finalizado"
+        OrderStatus.CANCELLED -> "Cancelado"
+        OrderStatus.UNKNOWN -> "Desconhecido"
+    }
+}
+
+private fun Double.toCurrencyText(): String {
+    return "R$ %.2f".format(this).replace(".", ",")
+}
+
+private fun Order.fulfillmentIcon(): Int {
+    return when (fulfillmentType) {
+        OrderFulfillmentType.DINE_IN -> R.drawable.ic_utensils_crossed
+        OrderFulfillmentType.TAKEOUT -> R.drawable.ic_basket
+        OrderFulfillmentType.DELIVERY -> R.drawable.ic_motorbike
+        OrderFulfillmentType.UNKNOWN -> R.drawable.ic_receipt
+    }
+}
+
+private fun Order.fulfillmentColor(): Color {
+    return when (fulfillmentType) {
+        OrderFulfillmentType.DINE_IN -> Color(0xFF2563EB)
+        OrderFulfillmentType.TAKEOUT -> Color(0xFFE76F51)
+        OrderFulfillmentType.DELIVERY -> Color(0xFF2A9D8F)
+        OrderFulfillmentType.UNKNOWN -> Color.Gray
     }
 }

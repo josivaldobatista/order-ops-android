@@ -1,5 +1,6 @@
 package com.jfb.orderops.dashboard.presentation
 
+import android.R.attr.order
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -125,6 +126,7 @@ fun DashboardScreen(
                         tablesCount = serviceTablesUiState.serviceTables.size,
                         ordersCount = ordersUiState.orders.size,
                         productsCount = productsUiState.products.size,
+                        recentOrders = ordersUiState.orders.take(3),
                         onOpenTables = { selectedTab = DashboardSection.Tables.ordinal },
                         onOpenOrders = { selectedTab = DashboardSection.Orders.ordinal },
                         onOpenProducts = { selectedTab = DashboardSection.Products.ordinal },
@@ -133,6 +135,9 @@ fun DashboardScreen(
                             navController.navigate(
                                 AppRoute.OrderDetail.createRoute(orderId)
                             )
+                        },
+                        onOpenAllOrders = {
+                            selectedTab = DashboardSection.Orders.ordinal
                         }
                     )
 
