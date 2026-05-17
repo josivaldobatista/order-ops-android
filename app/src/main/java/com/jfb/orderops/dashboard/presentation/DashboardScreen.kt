@@ -1,13 +1,8 @@
 package com.jfb.orderops.dashboard.presentation
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,7 +13,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
@@ -27,10 +21,9 @@ import androidx.navigation.NavController
 import com.jfb.orderops.core.navigation.AppRoute
 import com.jfb.orderops.core.network.RetrofitClient
 import com.jfb.orderops.core.storage.SessionStorage
+import com.jfb.orderops.core.ui.components.ComandexBottomBar
 import com.jfb.orderops.core.ui.components.ComandexScaffold
-import com.jfb.orderops.core.ui.components.ComandexTabBar
 import com.jfb.orderops.core.ui.components.DashboardHeader
-import com.jfb.orderops.core.ui.components.DashboardMetricCard
 import com.jfb.orderops.order.data.repository.OrderRepositoryImpl
 import com.jfb.orderops.order.domain.usecase.ListOrdersUseCase
 import com.jfb.orderops.order.presentation.list.OrdersScreen
@@ -111,128 +104,97 @@ fun DashboardScreen(
         }
     }
 
+    val sections = DashboardSection.entries
+    val selectedSection = sections[selectedTab]
+
     ComandexScaffold {
-
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 16.dp)
+            modifier = Modifier.fillMaxSize()
         ) {
-
             DashboardHeader(
                 onLogout = onLogout
             )
 
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
             ) {
+                when (selectedSection) {
+                    DashboardSection.Home -> DashboardHomeContent(
+                        tablesCount = serviceTablesUiState.serviceTables.size,
+                        ordersCount = ordersUiState.orders.size,
+                        productsCount = productsUiState.products.size,
+                        onOpenTables = { selectedTab = DashboardSection.Tables.ordinal },
+                        onOpenOrders = { selectedTab = DashboardSection.Orders.ordinal },
+                        onOpenProducts = { selectedTab = DashboardSection.Products.ordinal },
+                        onOpenReports = { selectedTab = DashboardSection.Reports.ordinal }
+                    )
 
-                DashboardMetricCard(
-                    title = "Mesas",
-                    value = serviceTablesUiState.serviceTables.size.toString(),
-                    modifier = Modifier.weight(1f)
-                )
-
-                DashboardMetricCard(
-                    title = "Pedidos",
-                    value = ordersUiState.orders.size.toString(),
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            DashboardMetricCard(
-                title = "Produtos",
-                value = productsUiState.products.size.toString(),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            ComandexTabBar(
-                tabs = listOf(
-                    "Mesas",
-                    "Pedidos",
-                    "Produtos",
-                    "Relatórios"
-                ),
-                selectedIndex = selectedTab,
-                onSelected = { selectedTab = it }
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            when (selectedTab) {
-
-                0 -> Column(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-
-                    Button(
-                        onClick = {
-                            navController.navigate(
-                                AppRoute.CreateServiceTable.route
-                            )
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 16.dp)
+                    DashboardSection.Tables -> Column(
+                        modifier = Modifier.fillMaxSize()
                     ) {
-                        Text("Nova mesa")
+                        Button(
+                            onClick = {
+                                navController.navigate(AppRoute.CreateServiceTable.route)
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Nova mesa")
+                        }
+
+                        ServiceTablesScreen(
+                            uiState = serviceTablesUiState,
+                            onRefresh = serviceTablesViewModel::loadServiceTables,
+                            onTableClick = { tableId ->
+                                navController.navigate(
+                                    AppRoute.CreateOrder.createRoute(tableId)
+                                )
+                            }
+                        )
                     }
 
-                    ServiceTablesScreen(
-                        uiState = serviceTablesUiState,
-                        onRefresh = serviceTablesViewModel::loadServiceTables,
-                        onTableClick = { tableId ->
+                    DashboardSection.Orders -> OrdersScreen(
+                        uiState = ordersUiState,
+                        onRefresh = {
+                            ordersViewModel.loadOrders()
+                        },
+                        onStatusSelected = { status ->
+                            ordersViewModel.loadOrders(status)
+                        },
+                        onOrderClick = { orderId ->
                             navController.navigate(
-                                AppRoute.CreateOrder.createRoute(tableId)
+                                AppRoute.OrderDetail.createRoute(orderId)
                             )
                         }
                     )
+
+                    DashboardSection.Products -> ProductsScreen(
+                        uiState = productsUiState,
+                        onRefresh = productsViewModel::loadProducts,
+                        onCreateProduct = {
+                            navController.navigate(AppRoute.CreateProduct.route)
+                        },
+                        onCreateCategory = {
+                            navController.navigate(AppRoute.CreateCategory.route)
+                        },
+                        onOpenCategories = {
+                            navController.navigate(AppRoute.Categories.route)
+                        }
+                    )
+
+                    DashboardSection.Reports -> PaymentReportScreen(
+                        uiState = reportUiState,
+                        onLoad = reportViewModel::loadToday
+                    )
                 }
-
-                1 -> OrdersScreen(
-                    uiState = ordersUiState,
-                    onRefresh = {
-                        ordersViewModel.loadOrders()
-                    },
-                    onStatusSelected = { status ->
-                        ordersViewModel.loadOrders(status)
-                    },
-                    onOrderClick = { orderId ->
-                        navController.navigate(
-                            AppRoute.OrderDetail.createRoute(orderId)
-                        )
-                    }
-                )
-
-                2 -> ProductsScreen(
-                    uiState = productsUiState,
-                    onRefresh = productsViewModel::loadProducts,
-                    onCreateProduct = {
-                        navController.navigate(
-                            AppRoute.CreateProduct.route
-                        )
-                    },
-                    onCreateCategory = {
-                        navController.navigate(
-                            AppRoute.CreateCategory.route
-                        )
-                    },
-                    onOpenCategories = {
-                        navController.navigate(
-                            AppRoute.Categories.route
-                        )
-                    }
-                )
-
-                3 -> PaymentReportScreen(
-                    uiState = reportUiState,
-                    onLoad = reportViewModel::loadToday
-                )
             }
+
+            ComandexBottomBar(
+                items = sections.map { it.label },
+                selectedIndex = selectedTab,
+                onItemSelected = { selectedTab = it }
+            )
         }
     }
 }
