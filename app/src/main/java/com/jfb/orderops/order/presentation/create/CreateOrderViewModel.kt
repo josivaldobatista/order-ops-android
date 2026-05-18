@@ -46,7 +46,7 @@ class CreateOrderViewModel(
 
             if (productsResult is AppResult.Success && categoriesResult is AppResult.Success) {
                 val categories = categoriesResult.data
-                val selectedCategoryId = categories.firstOrNull()?.id
+                val selectedCategoryId: Long? = null
 
                 _uiState.update {
                     it.copy(
@@ -54,9 +54,7 @@ class CreateOrderViewModel(
                         products = productsResult.data,
                         categories = categories,
                         selectedCategoryId = selectedCategoryId,
-                        selectedProductId = productsResult.data
-                            .firstOrNull { product -> product.categoryId == selectedCategoryId }
-                            ?.id
+                        selectedProductId = null
                     )
                 }
                 return@launch

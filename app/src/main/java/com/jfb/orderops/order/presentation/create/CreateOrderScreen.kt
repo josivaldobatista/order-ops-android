@@ -79,8 +79,8 @@ fun CreateOrderScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(bottom = if (uiState.items.isNotEmpty()) 132.dp else 24.dp),
-                verticalArrangement = Arrangement.spacedBy(18.dp),
-                contentPadding = PaddingValues(top = 16.dp)
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+                contentPadding = PaddingValues(top = 12.dp)
             ) {
                 item {
                     CreateOrderHeader(
@@ -117,32 +117,61 @@ fun CreateOrderScreen(
                     }
                 }
 
-                item {
-                    Text(
-                        text = selectedCategoryTitle(
-                            categories = uiState.categories,
-                            selectedCategoryId = uiState.selectedCategoryId
-                        ),
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                if (uiState.selectedCategoryId == null) {
+                    val activeCategories = uiState.categories.filter { it.active }
 
-                items(
-                    items = filteredProducts,
-                    key = { it.id }
-                ) { product ->
-                    val quantity = uiState.items
-                        .firstOrNull { it.productId == product.id }
-                        ?.quantity ?: 0
+                    activeCategories.forEach { category ->
+                        val productsByCategory = uiState.products.filter { product ->
+                            product.active && product.categoryId == category.id
+                        }
 
-                    ProductOrderCard(
-                        product = product,
-                        quantity = quantity,
-                        onAdd = { onAddProduct(product.id) },
-                        onDecrease = { onRemoveProduct(product.id) }
-                    )
+                        if (productsByCategory.isNotEmpty()) {
+                            item(key = "category-${category.id}") {
+                                CategorySectionTitle(title = category.name)
+                            }
+
+                            items(
+                                items = productsByCategory,
+                                key = { product -> product.id }
+                            ) { product ->
+                                val quantity = uiState.items
+                                    .firstOrNull { it.productId == product.id }
+                                    ?.quantity ?: 0
+
+                                ProductOrderCard(
+                                    product = product,
+                                    quantity = quantity,
+                                    onAdd = { onAddProduct(product.id) },
+                                    onDecrease = { onRemoveProduct(product.id) }
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    item {
+                        CategorySectionTitle(
+                            title = selectedCategoryTitle(
+                                categories = uiState.categories,
+                                selectedCategoryId = uiState.selectedCategoryId
+                            )
+                        )
+                    }
+
+                    items(
+                        items = filteredProducts,
+                        key = { product -> product.id }
+                    ) { product ->
+                        val quantity = uiState.items
+                            .firstOrNull { it.productId == product.id }
+                            ?.quantity ?: 0
+
+                        ProductOrderCard(
+                            product = product,
+                            quantity = quantity,
+                            onAdd = { onAddProduct(product.id) },
+                            onDecrease = { onRemoveProduct(product.id) }
+                        )
+                    }
                 }
 
                 if (!uiState.isLoading && filteredProducts.isEmpty()) {
@@ -166,6 +195,18 @@ fun CreateOrderScreen(
 }
 
 @Composable
+private fun CategorySectionTitle(
+    title: String
+) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onBackground,
+        fontWeight = FontWeight.Bold
+    )
+}
+
+@Composable
 private fun CreateOrderHeader(
     uiState: CreateOrderUiState,
     onBack: () -> Unit
@@ -181,13 +222,13 @@ private fun CreateOrderHeader(
             onClick = onBack,
             enabled = !uiState.isLoading,
             modifier = Modifier
-                .size(48.dp)
+                .size(42.dp)
                 .clip(RoundedCornerShape(16.dp))
                 .background(colors.surface.copy(alpha = 0.48f))
                 .border(
                     width = 1.dp,
                     color = colors.outline.copy(alpha = 0.18f),
-                    shape = RoundedCornerShape(16.dp)
+                    shape = RoundedCornerShape(14.dp)
                 )
         ) {
             Icon(
@@ -205,7 +246,7 @@ private fun CreateOrderHeader(
         ) {
             Text(
                 text = headerTitle(uiState),
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.titleLarge,
                 color = colors.onBackground,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
@@ -303,7 +344,7 @@ private fun FulfillmentChip(
 
     Row(
         modifier = Modifier
-            .height(46.dp)
+            .height(40.dp)
             .clip(RoundedCornerShape(15.dp))
             .background(background)
             .border(
@@ -312,7 +353,7 @@ private fun FulfillmentChip(
                 shape = RoundedCornerShape(15.dp)
             )
             .clickable(enabled = enabled) { onClick() }
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 13.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -320,7 +361,7 @@ private fun FulfillmentChip(
             painter = painterResource(iconRes),
             contentDescription = null,
             tint = contentColor,
-            modifier = Modifier.size(18.dp)
+            modifier = Modifier.size(16.dp)
         )
 
         Text(
@@ -384,7 +425,7 @@ private fun CategoryChip(
 
     Row(
         modifier = Modifier
-            .height(38.dp)
+            .height(34.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(
                 if (selected) colors.primary.copy(alpha = 0.18f)
@@ -396,7 +437,7 @@ private fun CategoryChip(
                 shape = RoundedCornerShape(14.dp)
             )
             .clickable { onClick() }
-            .padding(horizontal = 15.dp),
+            .padding(horizontal = 13.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -420,7 +461,7 @@ private fun ProductOrderCard(
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(20.dp),
         color = colors.surface.copy(alpha = 0.82f),
         border = BorderStroke(
             width = 1.dp,
@@ -428,7 +469,7 @@ private fun ProductOrderCard(
         )
     ) {
         Row(
-            modifier = Modifier.padding(14.dp),
+            modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             ProductImagePlaceholder(
@@ -490,8 +531,8 @@ private fun ProductImagePlaceholder(
 
     Box(
         modifier = Modifier
-            .size(64.dp)
-            .clip(RoundedCornerShape(18.dp))
+            .size(52.dp)
+            .clip(RoundedCornerShape(15.dp))
             .background(colors.surfaceVariant.copy(alpha = 0.72f)),
         contentAlignment = Alignment.Center
     ) {
@@ -516,13 +557,13 @@ private fun QuantityControl(
         IconButton(
             onClick = onAdd,
             modifier = Modifier
-                .size(42.dp)
+                .size(48.dp)
                 .clip(RoundedCornerShape(14.dp))
                 .background(colors.primary.copy(alpha = 0.18f))
                 .border(
                     width = 1.dp,
                     color = colors.primary,
-                    shape = RoundedCornerShape(14.dp)
+                    shape = RoundedCornerShape(13.dp)
                 )
         ) {
             Text(
@@ -537,7 +578,7 @@ private fun QuantityControl(
 
     Row(
         modifier = Modifier
-            .height(42.dp)
+            .height(38.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(colors.background.copy(alpha = 0.24f))
             .border(
@@ -551,11 +592,11 @@ private fun QuantityControl(
         TextButton(
             onClick = onDecrease,
             contentPadding = PaddingValues(0.dp),
-            modifier = Modifier.size(34.dp)
+            modifier = Modifier.size(30.dp)
         ) {
             Text(
                 text = "−",
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleMedium,
                 color = colors.onSurface
             )
         }
