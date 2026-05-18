@@ -4,7 +4,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,19 +13,19 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,6 +37,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,8 +52,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.jfb.orderops.R
-import com.jfb.orderops.auth.presentation.login.LoginScreen
-import com.jfb.orderops.auth.presentation.state.LoginUiState
 import com.jfb.orderops.category.domain.model.Category
 import com.jfb.orderops.core.ui.components.ComandexScaffold
 import com.jfb.orderops.order.domain.model.OrderFulfillmentType
@@ -85,6 +86,9 @@ fun CreateOrderScreen(
         bottomSheetState = sheetState
     )
 
+    val isExpanded =
+        scaffoldState.bottomSheetState.targetValue == SheetValue.Expanded
+
     ComandexScaffold {
         if (uiState.items.isEmpty()) {
             CreateOrderContent(
@@ -102,7 +106,7 @@ fun CreateOrderScreen(
                     .fillMaxSize()
                     .padding(bottom = 18.dp),
                 scaffoldState = scaffoldState,
-                sheetPeekHeight = 104.dp,
+                sheetPeekHeight = 132.dp,
                 sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
                 sheetContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
                 sheetDragHandle = {
@@ -121,7 +125,12 @@ fun CreateOrderScreen(
                         )
 
                         Icon(
-                            painter = painterResource(R.drawable.ic_arrow_up),
+                            painter = painterResource(
+                                if (isExpanded)
+                                    R.drawable.ic_arrow_down
+                                else
+                                    R.drawable.ic_arrow_up
+                            ),
                             contentDescription = "Expandir carrinho",
                             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
                             modifier = Modifier
@@ -187,10 +196,12 @@ private fun CreateOrderContent(
         }
 
         item {
-            FulfillmentTypeSelector(
+            OrderContextBar(
                 selectedType = uiState.fulfillmentType,
+                serviceTableId = uiState.serviceTableId,
                 enabled = !uiState.isLoading,
-                onSelected = onFulfillmentTypeSelected
+                onFulfillmentTypeSelected = onFulfillmentTypeSelected,
+                onChangeTable = onBack
             )
         }
 
@@ -343,92 +354,135 @@ private fun CreateOrderHeader(
 }
 
 @Composable
-private fun FulfillmentTypeSelector(
+private fun OrderContextBar(
     selectedType: OrderFulfillmentType,
+    serviceTableId: Long?,
     enabled: Boolean,
-    onSelected: (OrderFulfillmentType) -> Unit
-) {
-    Column {
-        Text(
-            text = "Tipo de atendimento",
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onBackground,
-            fontWeight = FontWeight.SemiBold
-        )
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        Row(
-            modifier = Modifier.horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            OrderFulfillmentType.entries
-                .filter { it != OrderFulfillmentType.UNKNOWN }
-                .forEach { type ->
-                    FulfillmentChip(
-                        text = type.shortLabel(),
-                        iconRes = type.iconRes(),
-                        selected = selectedType == type,
-                        enabled = enabled,
-                        onClick = { onSelected(type) }
-                    )
-                }
-        }
-    }
-}
-
-@Composable
-private fun FulfillmentChip(
-    text: String,
-    iconRes: Int,
-    selected: Boolean,
-    enabled: Boolean,
-    onClick: () -> Unit
+    onFulfillmentTypeSelected: (OrderFulfillmentType) -> Unit,
+    onChangeTable: () -> Unit
 ) {
     val colors = MaterialTheme.colorScheme
+    var expanded by remember { mutableStateOf(false) }
 
-    val background = if (selected) {
-        colors.primary.copy(alpha = 0.22f)
-    } else {
-        colors.surface.copy(alpha = 0.42f)
-    }
-
-    val borderColor = if (selected) {
-        colors.primary
-    } else {
-        colors.outline.copy(alpha = 0.18f)
-    }
-
-    val contentColor = if (selected) {
-        colors.primary
-    } else {
-        colors.onSurfaceVariant
-    }
-
-    Row(
-        modifier = Modifier
-            .height(40.dp)
-            .clip(RoundedCornerShape(15.dp))
-            .background(background)
-            .border(1.dp, borderColor, RoundedCornerShape(15.dp))
-            .clickable(enabled = enabled) { onClick() }
-            .padding(horizontal = 13.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        color = colors.surface.copy(alpha = 0.42f),
+        border = BorderStroke(
+            width = 1.dp,
+            color = colors.outline.copy(alpha = 0.14f)
+        )
     ) {
-        Icon(
-            painter = painterResource(iconRes),
-            contentDescription = null,
-            tint = contentColor,
-            modifier = Modifier.size(16.dp)
-        )
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box {
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(14.dp))
+                        .clickable(enabled = enabled) {
+                            expanded = true
+                        }
+                        .background(colors.background.copy(alpha = 0.20f))
+                        .border(
+                            width = 1.dp,
+                            color = colors.outline.copy(alpha = 0.14f),
+                            shape = RoundedCornerShape(14.dp)
+                        )
+                        .padding(horizontal = 12.dp, vertical = 9.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(selectedType.iconRes()),
+                        contentDescription = null,
+                        tint = colors.primary,
+                        modifier = Modifier.size(17.dp)
+                    )
 
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelLarge,
-            color = contentColor,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
-        )
+                    Text(
+                        text = selectedType.shortLabel(),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = colors.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Text(
+                        text = "⌄",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = colors.onSurfaceVariant
+                    )
+                }
+
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                    containerColor = colors.surface,
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    OrderFulfillmentType.entries
+                        .filter { it != OrderFulfillmentType.UNKNOWN }
+                        .forEach { type ->
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = type.shortLabel(),
+                                        color = colors.onSurface
+                                    )
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        painter = painterResource(type.iconRes()),
+                                        contentDescription = null,
+                                        tint = if (type == selectedType) colors.primary else colors.onSurfaceVariant,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                },
+                                onClick = {
+                                    expanded = false
+                                    onFulfillmentTypeSelected(type)
+                                }
+                            )
+                        }
+                }
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            if (selectedType == OrderFulfillmentType.DINE_IN) {
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(14.dp))
+                        .clickable(enabled = enabled) {
+                            onChangeTable()
+                        }
+                        .background(colors.background.copy(alpha = 0.20f))
+                        .border(
+                            width = 1.dp,
+                            color = colors.outline.copy(alpha = 0.14f),
+                            shape = RoundedCornerShape(14.dp)
+                        )
+                        .padding(horizontal = 12.dp, vertical = 9.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_turntable),
+                        contentDescription = null,
+                        tint = colors.onSurfaceVariant,
+                        modifier = Modifier.size(17.dp)
+                    )
+
+                    Text(
+                        text = if (serviceTableId != null) "Mesa $serviceTableId" else "Alterar mesa",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = colors.onSurface,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -657,11 +711,24 @@ private fun QuantityControl(
             contentPadding = PaddingValues(0.dp),
             modifier = Modifier.size(30.dp)
         ) {
-            Text(
-                text = "−",
-                style = MaterialTheme.typography.titleMedium,
-                color = colors.onSurface
-            )
+            if (quantity == 1) {
+
+                Icon(
+                    painter = painterResource(R.drawable.ic_trash_2),
+                    contentDescription = "Remover item",
+                    tint = colors.error,
+                    modifier = Modifier.size(18.dp)
+                )
+
+            } else {
+
+                Text(
+                    text = "−",
+                    color = colors.onSurface,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
 
         Text(

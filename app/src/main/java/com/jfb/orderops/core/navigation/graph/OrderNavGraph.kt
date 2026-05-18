@@ -88,7 +88,7 @@ fun NavGraphBuilder.orderGraph(
                 viewModel.onProductSelected(productId)
                 viewModel.addSelectedProduct()
             },
-            onRemoveProduct = viewModel::removeProduct,
+            onRemoveProduct = viewModel::decreaseProductQuantity,
             onCreateOrder = {
                 viewModel.createOrder(
                     onSuccess = { orderId ->
