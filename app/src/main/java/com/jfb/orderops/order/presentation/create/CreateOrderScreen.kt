@@ -322,7 +322,7 @@ private fun CreateOrderHeader(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = headerTitle(uiState),
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleMedium,
                 color = colors.onBackground,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
@@ -584,32 +584,49 @@ private fun ProductOrderCard(
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(16.dp),
         color = colors.surface.copy(alpha = 0.82f),
         border = BorderStroke(
             width = 1.dp,
-            color = colors.outline.copy(alpha = 0.14f)
+            color = colors.outline.copy(alpha = 0.12f)
         )
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 9.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             ProductImagePlaceholder(name = product.name)
 
-            Spacer(modifier = Modifier.width(14.dp))
+            Spacer(modifier = Modifier.width(10.dp))
 
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = product.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = colors.onSurface,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Text(
+                        text = product.name,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = colors.onSurface,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
 
-                Spacer(modifier = Modifier.height(5.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Text(
+                        text = product.price.toCurrency(),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = colors.onSurface,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
                     text = product.description.orEmpty().ifBlank {
@@ -620,24 +637,19 @@ private fun ProductOrderCard(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                Text(
-                    text = product.price.toCurrency(),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = colors.onSurface,
-                    fontWeight = FontWeight.SemiBold
-                )
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(14.dp))
 
-            QuantityControl(
-                quantity = quantity,
-                onAdd = onAdd,
-                onDecrease = onDecrease
-            )
+            Box(
+                modifier = Modifier.padding(end = 6.dp)
+            ) {
+                QuantityControl(
+                    quantity = quantity,
+                    onAdd = onAdd,
+                    onDecrease = onDecrease
+                )
+            }
         }
     }
 }
@@ -648,16 +660,16 @@ private fun ProductImagePlaceholder(name: String) {
 
     Box(
         modifier = Modifier
-            .size(52.dp)
-            .clip(RoundedCornerShape(15.dp))
+            .size(44.dp)
+            .clip(RoundedCornerShape(12.dp))
             .background(colors.surfaceVariant.copy(alpha = 0.72f)),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = name.firstOrNull()?.uppercase() ?: "?",
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.bodyLarge,
             color = colors.primary,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.SemiBold,
         )
     }
 }
@@ -671,23 +683,24 @@ private fun QuantityControl(
     val colors = MaterialTheme.colorScheme
 
     if (quantity <= 0) {
-        IconButton(
-            onClick = onAdd,
+        Box(
             modifier = Modifier
-                .size(38.dp)
-                .clip(RoundedCornerShape(13.dp))
-                .background(colors.primary.copy(alpha = 0.18f))
+                .size(30.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(colors.primary.copy(alpha = 0.14f))
                 .border(
                     width = 1.dp,
                     color = colors.primary,
-                    shape = RoundedCornerShape(13.dp)
+                    shape = RoundedCornerShape(10.dp)
                 )
+                .clickable { onAdd() },
+            contentAlignment = Alignment.Center
         ) {
             Text(
                 text = "+",
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleMedium,
                 color = colors.primary,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Bold
             )
         }
         return
@@ -695,21 +708,21 @@ private fun QuantityControl(
 
     Row(
         modifier = Modifier
-            .height(38.dp)
-            .clip(RoundedCornerShape(14.dp))
+            .height(26.dp)
+            .clip(RoundedCornerShape(10.dp))
             .background(colors.background.copy(alpha = 0.24f))
             .border(
                 width = 1.dp,
                 color = colors.outline.copy(alpha = 0.18f),
-                shape = RoundedCornerShape(14.dp)
+                shape = RoundedCornerShape(10.dp)
             )
-            .padding(horizontal = 4.dp),
+            .padding(horizontal = 2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         TextButton(
             onClick = onDecrease,
             contentPadding = PaddingValues(0.dp),
-            modifier = Modifier.size(30.dp)
+            modifier = Modifier.size(22.dp)
         ) {
             if (quantity == 1) {
 
@@ -733,10 +746,10 @@ private fun QuantityControl(
 
         Text(
             text = quantity.toString(),
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.labelLarge,
             color = colors.primary,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 8.dp)
+            modifier = Modifier.padding(horizontal = 4.dp)
         )
 
         TextButton(
@@ -804,14 +817,14 @@ private fun OrderCartSheetContent(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "$totalItems ${if (totalItems == 1) "item" else "itens"}",
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = colors.onSurface,
                     fontWeight = FontWeight.Bold
                 )
 
                 Text(
                     text = totalAmount.toCurrency(),
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = colors.primary,
                     fontWeight = FontWeight.Bold
                 )
