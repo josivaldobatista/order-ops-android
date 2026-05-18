@@ -24,15 +24,19 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberBottomSheetScaffoldState
+import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,8 +45,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.jfb.orderops.R
+import com.jfb.orderops.auth.presentation.login.LoginScreen
+import com.jfb.orderops.auth.presentation.state.LoginUiState
 import com.jfb.orderops.category.domain.model.Category
 import com.jfb.orderops.core.ui.components.ComandexScaffold
 import com.jfb.orderops.order.domain.model.OrderFulfillmentType
@@ -50,9 +58,11 @@ import com.jfb.orderops.order.presentation.state.CreateOrderItemUiState
 import com.jfb.orderops.order.presentation.state.CreateOrderUiState
 import com.jfb.orderops.product.domain.model.Product
 import com.jfb.orderops.ui.theme.LocalOrderOpsExtraColors
+import com.jfb.orderops.ui.theme.OrderOpsTheme
 import java.text.NumberFormat
 import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateOrderScreen(
     uiState: CreateOrderUiState,
@@ -63,131 +73,84 @@ fun CreateOrderScreen(
     onCreateOrder: () -> Unit,
     onBack: () -> Unit
 ) {
-    val filteredProducts = uiState.products.filter { product ->
-        product.active &&
-                (uiState.selectedCategoryId == null || product.categoryId == uiState.selectedCategoryId)
-    }
-
     val totalItems = uiState.items.sumOf { it.quantity }
     val totalAmount = uiState.items.sumOf { it.totalPrice }
 
+    val sheetState = rememberStandardBottomSheetState(
+        initialValue = SheetValue.PartiallyExpanded,
+        skipHiddenState = true
+    )
+
+    val scaffoldState = rememberBottomSheetScaffoldState(
+        bottomSheetState = sheetState
+    )
+
     ComandexScaffold {
-        Box(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            LazyColumn(
+        if (uiState.items.isEmpty()) {
+            CreateOrderContent(
+                uiState = uiState,
+                bottomPadding = 24.dp,
+                onFulfillmentTypeSelected = onFulfillmentTypeSelected,
+                onCategorySelected = onCategorySelected,
+                onAddProduct = onAddProduct,
+                onRemoveProduct = onRemoveProduct,
+                onBack = onBack
+            )
+        } else {
+            BottomSheetScaffold(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(bottom = if (uiState.items.isNotEmpty()) 132.dp else 24.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
-                contentPadding = PaddingValues(top = 12.dp)
-            ) {
-                item {
-                    CreateOrderHeader(
-                        uiState = uiState,
-                        onBack = onBack
-                    )
-                }
+                    .padding(bottom = 18.dp),
+                scaffoldState = scaffoldState,
+                sheetPeekHeight = 104.dp,
+                sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                sheetContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
+                sheetDragHandle = {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 10.dp, start = 18.dp, end = 18.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .width(42.dp)
+                                .height(4.dp)
+                                .clip(RoundedCornerShape(100.dp))
+                                .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f))
+                                .align(Alignment.Center)
+                        )
 
-                item {
-                    FulfillmentTypeSelector(
-                        selectedType = uiState.fulfillmentType,
-                        enabled = !uiState.isLoading,
-                        onSelected = onFulfillmentTypeSelected
-                    )
-                }
-
-                item {
-                    CategorySelector(
-                        categories = uiState.categories,
-                        selectedCategoryId = uiState.selectedCategoryId,
-                        onCategorySelected = onCategorySelected
-                    )
-                }
-
-                if (uiState.isLoading) {
-                    item {
-                        LoadingContent()
-                    }
-                }
-
-                uiState.errorMessage?.let { message ->
-                    item {
-                        ErrorMessage(message = message)
-                    }
-                }
-
-                if (uiState.selectedCategoryId == null) {
-                    val activeCategories = uiState.categories.filter { it.active }
-
-                    activeCategories.forEach { category ->
-                        val productsByCategory = uiState.products.filter { product ->
-                            product.active && product.categoryId == category.id
-                        }
-
-                        if (productsByCategory.isNotEmpty()) {
-                            item(key = "category-${category.id}") {
-                                CategorySectionTitle(title = category.name)
-                            }
-
-                            items(
-                                items = productsByCategory,
-                                key = { product -> product.id }
-                            ) { product ->
-                                val quantity = uiState.items
-                                    .firstOrNull { it.productId == product.id }
-                                    ?.quantity ?: 0
-
-                                ProductOrderCard(
-                                    product = product,
-                                    quantity = quantity,
-                                    onAdd = { onAddProduct(product.id) },
-                                    onDecrease = { onRemoveProduct(product.id) }
-                                )
-                            }
-                        }
-                    }
-                } else {
-                    item {
-                        CategorySectionTitle(
-                            title = selectedCategoryTitle(
-                                categories = uiState.categories,
-                                selectedCategoryId = uiState.selectedCategoryId
-                            )
+                        Icon(
+                            painter = painterResource(R.drawable.ic_arrow_up),
+                            contentDescription = "Expandir carrinho",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+                            modifier = Modifier
+                                .size(20.dp)
+                                .align(Alignment.CenterEnd)
                         )
                     }
-
-                    items(
-                        items = filteredProducts,
-                        key = { product -> product.id }
-                    ) { product ->
-                        val quantity = uiState.items
-                            .firstOrNull { it.productId == product.id }
-                            ?.quantity ?: 0
-
-                        ProductOrderCard(
-                            product = product,
-                            quantity = quantity,
-                            onAdd = { onAddProduct(product.id) },
-                            onDecrease = { onRemoveProduct(product.id) }
-                        )
-                    }
-                }
-
-                if (!uiState.isLoading && filteredProducts.isEmpty()) {
-                    item {
-                        EmptyProductsMessage()
-                    }
-                }
-            }
-
-            if (uiState.items.isNotEmpty()) {
-                OrderSummaryBar(
-                    totalItems = totalItems,
-                    totalAmount = totalAmount,
-                    isLoading = uiState.isLoading,
-                    onCreateOrder = onCreateOrder,
-                    modifier = Modifier.align(Alignment.BottomCenter)
+                },
+                sheetContent = {
+                    OrderCartSheetContent(
+                        items = uiState.items,
+                        totalItems = totalItems,
+                        totalAmount = totalAmount,
+                        isLoading = uiState.isLoading,
+                        onAddProduct = onAddProduct,
+                        onRemoveProduct = onRemoveProduct,
+                        onCreateOrder = onCreateOrder
+                    )
+                },
+                containerColor = Color.Transparent
+            ) { padding ->
+                CreateOrderContent(
+                    uiState = uiState,
+                    bottomPadding = padding.calculateBottomPadding() + 16.dp,
+                    onFulfillmentTypeSelected = onFulfillmentTypeSelected,
+                    onCategorySelected = onCategorySelected,
+                    onAddProduct = onAddProduct,
+                    onRemoveProduct = onRemoveProduct,
+                    onBack = onBack
                 )
             }
         }
@@ -195,15 +158,119 @@ fun CreateOrderScreen(
 }
 
 @Composable
-private fun CategorySectionTitle(
-    title: String
+private fun CreateOrderContent(
+    uiState: CreateOrderUiState,
+    bottomPadding: Dp,
+    onFulfillmentTypeSelected: (OrderFulfillmentType) -> Unit,
+    onCategorySelected: (Long?) -> Unit,
+    onAddProduct: (Long) -> Unit,
+    onRemoveProduct: (Long) -> Unit,
+    onBack: () -> Unit
 ) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleMedium,
-        color = MaterialTheme.colorScheme.onBackground,
-        fontWeight = FontWeight.Bold
-    )
+    val filteredProducts = uiState.products.filter { product ->
+        product.active &&
+                (uiState.selectedCategoryId == null || product.categoryId == uiState.selectedCategoryId)
+    }
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(bottom = bottomPadding),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+        contentPadding = PaddingValues(top = 12.dp)
+    ) {
+        item {
+            CreateOrderHeader(
+                uiState = uiState,
+                onBack = onBack
+            )
+        }
+
+        item {
+            FulfillmentTypeSelector(
+                selectedType = uiState.fulfillmentType,
+                enabled = !uiState.isLoading,
+                onSelected = onFulfillmentTypeSelected
+            )
+        }
+
+        item {
+            CategorySelector(
+                categories = uiState.categories,
+                selectedCategoryId = uiState.selectedCategoryId,
+                onCategorySelected = onCategorySelected
+            )
+        }
+
+        uiState.errorMessage?.let { message ->
+            item {
+                ErrorMessage(message = message)
+            }
+        }
+
+        if (uiState.selectedCategoryId == null) {
+            uiState.categories
+                .filter { it.active }
+                .forEach { category ->
+                    val productsByCategory = uiState.products.filter { product ->
+                        product.active && product.categoryId == category.id
+                    }
+
+                    if (productsByCategory.isNotEmpty()) {
+                        item(key = "category-${category.id}") {
+                            CategorySectionTitle(title = category.name)
+                        }
+
+                        items(
+                            items = productsByCategory,
+                            key = { product -> product.id }
+                        ) { product ->
+                            val quantity = uiState.items
+                                .firstOrNull { it.productId == product.id }
+                                ?.quantity ?: 0
+
+                            ProductOrderCard(
+                                product = product,
+                                quantity = quantity,
+                                onAdd = { onAddProduct(product.id) },
+                                onDecrease = { onRemoveProduct(product.id) }
+                            )
+                        }
+                    }
+                }
+        } else {
+            item {
+                CategorySectionTitle(
+                    title = selectedCategoryTitle(
+                        categories = uiState.categories,
+                        selectedCategoryId = uiState.selectedCategoryId
+                    )
+                )
+            }
+
+            items(
+                items = filteredProducts,
+                key = { product -> product.id }
+            ) { product ->
+                val quantity = uiState.items
+                    .firstOrNull { it.productId == product.id }
+                    ?.quantity ?: 0
+
+                ProductOrderCard(
+                    product = product,
+                    quantity = quantity,
+                    onAdd = { onAddProduct(product.id) },
+                    onDecrease = { onRemoveProduct(product.id) }
+                )
+            }
+        }
+
+        if (!uiState.isLoading && filteredProducts.isEmpty() && uiState.selectedCategoryId != null) {
+            item {
+                EmptyProductsMessage()
+            }
+        }
+    }
 }
 
 @Composable
@@ -223,7 +290,7 @@ private fun CreateOrderHeader(
             enabled = !uiState.isLoading,
             modifier = Modifier
                 .size(42.dp)
-                .clip(RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(14.dp))
                 .background(colors.surface.copy(alpha = 0.48f))
                 .border(
                     width = 1.dp,
@@ -241,9 +308,7 @@ private fun CreateOrderHeader(
 
         Spacer(modifier = Modifier.width(14.dp))
 
-        Column(
-            modifier = Modifier.weight(1f)
-        ) {
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = headerTitle(uiState),
                 style = MaterialTheme.typography.titleLarge,
@@ -255,9 +320,7 @@ private fun CreateOrderHeader(
 
             Spacer(modifier = Modifier.height(3.dp))
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier
                         .size(8.dp)
@@ -347,11 +410,7 @@ private fun FulfillmentChip(
             .height(40.dp)
             .clip(RoundedCornerShape(15.dp))
             .background(background)
-            .border(
-                width = 1.dp,
-                color = borderColor,
-                shape = RoundedCornerShape(15.dp)
-            )
+            .border(1.dp, borderColor, RoundedCornerShape(15.dp))
             .clickable(enabled = enabled) { onClick() }
             .padding(horizontal = 13.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -451,6 +510,16 @@ private fun CategoryChip(
 }
 
 @Composable
+private fun CategorySectionTitle(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onBackground,
+        fontWeight = FontWeight.Bold
+    )
+}
+
+@Composable
 private fun ProductOrderCard(
     product: Product,
     quantity: Int,
@@ -472,15 +541,11 @@ private fun ProductOrderCard(
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            ProductImagePlaceholder(
-                name = product.name
-            )
+            ProductImagePlaceholder(name = product.name)
 
             Spacer(modifier = Modifier.width(14.dp))
 
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = product.name,
                     style = MaterialTheme.typography.titleMedium,
@@ -524,9 +589,7 @@ private fun ProductOrderCard(
 }
 
 @Composable
-private fun ProductImagePlaceholder(
-    name: String
-) {
+private fun ProductImagePlaceholder(name: String) {
     val colors = MaterialTheme.colorScheme
 
     Box(
@@ -538,7 +601,7 @@ private fun ProductImagePlaceholder(
     ) {
         Text(
             text = name.firstOrNull()?.uppercase() ?: "?",
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.titleMedium,
             color = colors.primary,
             fontWeight = FontWeight.Bold
         )
@@ -557,8 +620,8 @@ private fun QuantityControl(
         IconButton(
             onClick = onAdd,
             modifier = Modifier
-                .size(48.dp)
-                .clip(RoundedCornerShape(14.dp))
+                .size(38.dp)
+                .clip(RoundedCornerShape(13.dp))
                 .background(colors.primary.copy(alpha = 0.18f))
                 .border(
                     width = 1.dp,
@@ -568,7 +631,7 @@ private fun QuantityControl(
         ) {
             Text(
                 text = "+",
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.titleLarge,
                 color = colors.primary,
                 fontWeight = FontWeight.Medium
             )
@@ -612,11 +675,11 @@ private fun QuantityControl(
         TextButton(
             onClick = onAdd,
             contentPadding = PaddingValues(0.dp),
-            modifier = Modifier.size(34.dp)
+            modifier = Modifier.size(30.dp)
         ) {
             Text(
                 text = "+",
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleMedium,
                 color = colors.onSurface
             )
         }
@@ -624,41 +687,38 @@ private fun QuantityControl(
 }
 
 @Composable
-private fun OrderSummaryBar(
+private fun OrderCartSheetContent(
+    items: List<CreateOrderItemUiState>,
     totalItems: Int,
     totalAmount: Double,
     isLoading: Boolean,
-    onCreateOrder: () -> Unit,
-    modifier: Modifier = Modifier
+    onAddProduct: (Long) -> Unit,
+    onRemoveProduct: (Long) -> Unit,
+    onCreateOrder: () -> Unit
 ) {
     val colors = MaterialTheme.colorScheme
 
-    Surface(
-        modifier = modifier
+    Column(
+        modifier = Modifier
             .fillMaxWidth()
-            .navigationBarsPadding(),
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        color = colors.surface.copy(alpha = 0.96f),
-        tonalElevation = 8.dp,
-        shadowElevation = 12.dp,
-        border = BorderStroke(
-            width = 1.dp,
-            color = colors.outline.copy(alpha = 0.14f)
-        )
+            .padding(horizontal = 18.dp, vertical = 10.dp)
     ) {
+        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(8.dp))
+
         Row(
-            modifier = Modifier.padding(18.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(56.dp)
-                    .clip(RoundedCornerShape(18.dp))
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(16.dp))
                     .background(colors.background.copy(alpha = 0.34f))
                     .border(
                         width = 1.dp,
                         color = colors.outline.copy(alpha = 0.16f),
-                        shape = RoundedCornerShape(18.dp)
+                        shape = RoundedCornerShape(16.dp)
                     ),
                 contentAlignment = Alignment.Center
             ) {
@@ -666,23 +726,21 @@ private fun OrderSummaryBar(
                     painter = painterResource(R.drawable.ic_basket),
                     contentDescription = null,
                     tint = colors.primary,
-                    modifier = Modifier.size(26.dp)
+                    modifier = Modifier.size(24.dp)
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
             }
 
             Spacer(modifier = Modifier.width(14.dp))
 
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "$totalItems ${if (totalItems == 1) "item" else "itens"}",
                     style = MaterialTheme.typography.titleMedium,
                     color = colors.onSurface,
                     fontWeight = FontWeight.Bold
                 )
-
-                Spacer(modifier = Modifier.height(3.dp))
 
                 Text(
                     text = totalAmount.toCurrency(),
@@ -698,11 +756,9 @@ private fun OrderSummaryBar(
                 shape = RoundedCornerShape(18.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = colors.primary,
-                    contentColor = colors.onPrimary,
-                    disabledContainerColor = colors.surfaceVariant,
-                    disabledContentColor = colors.onSurfaceVariant
+                    contentColor = colors.onPrimary
                 ),
-                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 14.dp)
+                contentPadding = PaddingValues(horizontal = 22.dp, vertical = 13.dp)
             ) {
                 Text(
                     text = if (isLoading) "Criando..." else "Criar pedido",
@@ -710,25 +766,92 @@ private fun OrderSummaryBar(
                 )
             }
         }
-    }
-}
 
-@Composable
-private fun LoadingContent() {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center
-    ) {
-        CircularProgressIndicator(
-            color = MaterialTheme.colorScheme.primary
+        Spacer(modifier = Modifier.height(18.dp))
+
+        Text(
+            text = "Itens adicionados",
+            style = MaterialTheme.typography.titleMedium,
+            color = colors.onSurface,
+            fontWeight = FontWeight.Bold
         )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            items.forEach { item ->
+                CartItemRow(
+                    item = item,
+                    onAdd = { onAddProduct(item.productId) },
+                    onDecrease = { onRemoveProduct(item.productId) }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(36.dp))
     }
 }
 
 @Composable
-private fun ErrorMessage(
-    message: String
+private fun CartItemRow(
+    item: CreateOrderItemUiState,
+    onAdd: () -> Unit,
+    onDecrease: () -> Unit
 ) {
+    val colors = MaterialTheme.colorScheme
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        color = colors.background.copy(alpha = 0.26f),
+        border = BorderStroke(
+            width = 1.dp,
+            color = colors.outline.copy(alpha = 0.12f)
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = item.productName,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = colors.onSurface,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(modifier = Modifier.height(3.dp))
+
+                Text(
+                    text = "${item.quantity} x ${item.unitPrice.toCurrency()}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onSurfaceVariant
+                )
+            }
+
+            Text(
+                text = item.totalPrice.toCurrency(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = colors.onSurface,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.width(10.dp))
+
+            QuantityControl(
+                quantity = item.quantity,
+                onAdd = onAdd,
+                onDecrease = onDecrease
+            )
+        }
+    }
+}
+
+@Composable
+private fun ErrorMessage(message: String) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
@@ -767,9 +890,7 @@ private fun EmptyProductsMessage() {
     }
 }
 
-private fun headerTitle(
-    uiState: CreateOrderUiState
-): String {
+private fun headerTitle(uiState: CreateOrderUiState): String {
     return if (uiState.fulfillmentType == OrderFulfillmentType.DINE_IN && uiState.serviceTableId != null) {
         "Pedido da Mesa ${uiState.serviceTableId}"
     } else {
@@ -777,9 +898,7 @@ private fun headerTitle(
     }
 }
 
-private fun headerSubtitle(
-    uiState: CreateOrderUiState
-): String {
+private fun headerSubtitle(uiState: CreateOrderUiState): String {
     return when (uiState.fulfillmentType) {
         OrderFulfillmentType.DINE_IN -> "Atendimento local"
         OrderFulfillmentType.TAKEOUT -> "Retirada no balcão"
@@ -817,4 +936,65 @@ private fun Double.toCurrency(): String {
     return NumberFormat
         .getCurrencyInstance(Locale("pt", "BR"))
         .format(this)
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun CreateOrderScreenPreview() {
+    OrderOpsTheme {
+        CreateOrderScreen(
+            uiState = CreateOrderUiState(
+                serviceTableId = 1L,
+                fulfillmentType = OrderFulfillmentType.DINE_IN,
+                categories = listOf(
+                    Category(id = 1L, name = "🍔 Hambúrgueres", active = true),
+                    Category(id = 2L, name = "🥤 Bebidas", active = true)
+                ),
+                products = listOf(
+                    Product(
+                        id = 1L,
+                        name = "X-Burger",
+                        categoryId = 1L,
+                        categoryName = "Hambúrgueres",
+                        description = "Hambúrguer artesanal com queijo",
+                        price = 29.90,
+                        active = true
+                    ),
+                    Product(
+                        id = 2L,
+                        name = "Hambúrguer Artesanal",
+                        categoryId = 1L,
+                        categoryName = "Hambúrgueres",
+                        description = "Hambúrguer de carne bovina 180g, queijo cheddar e cebola caramelizada",
+                        price = 29.50,
+                        active = true
+                    ),
+                    Product(
+                        id = 3L,
+                        name = "Coca-Cola 2L",
+                        categoryId = 2L,
+                        categoryName = "Bebidas",
+                        description = "Refrigerante Coca-Cola de 2L Original",
+                        price = 14.90,
+                        active = true
+                    )
+                ),
+                selectedCategoryId = null,
+                items = listOf(
+                    CreateOrderItemUiState(
+                        productId = 1L,
+                        productName = "X-Burger",
+                        quantity = 1,
+                        unitPrice = 29.90
+                    )
+                )
+            ),
+            onFulfillmentTypeSelected = {},
+            onCategorySelected = {},
+            onAddProduct = {},
+            onRemoveProduct = {},
+            onCreateOrder = {},
+            onBack = {}
+        )
+    }
 }
