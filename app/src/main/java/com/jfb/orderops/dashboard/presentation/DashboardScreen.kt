@@ -23,6 +23,7 @@ import com.jfb.orderops.core.ui.components.ComandexBottomBar
 import com.jfb.orderops.core.ui.components.ComandexScaffold
 import com.jfb.orderops.core.ui.components.DashboardHeader
 import com.jfb.orderops.order.data.repository.OrderRepositoryImpl
+import com.jfb.orderops.order.domain.model.OrderStatus
 import com.jfb.orderops.order.domain.usecase.ListOrdersUseCase
 import com.jfb.orderops.order.presentation.list.OrdersScreen
 import com.jfb.orderops.order.presentation.list.OrdersViewModel
@@ -171,9 +172,22 @@ fun DashboardScreen(
                         onRefresh = serviceTablesViewModel::loadServiceTables,
 
                         onTableClick = { tableId ->
-                            navController.navigate(
-                                AppRoute.CreateOrder.createRoute(tableId)
-                            )
+
+                            val openOrder = ordersUiState.orders.firstOrNull { order ->
+                                order.serviceTableId == tableId &&
+                                        order.status != OrderStatus.FINISHED &&
+                                        order.status != OrderStatus.CANCELLED
+                            }
+
+                            if (openOrder != null) {
+                                navController.navigate(
+                                    AppRoute.OrderDetail.createRoute(openOrder.id)
+                                )
+                            } else {
+                                navController.navigate(
+                                    AppRoute.CreateOrder.createRoute(tableId)
+                                )
+                            }
                         },
 
                         onCreateTableClick = {

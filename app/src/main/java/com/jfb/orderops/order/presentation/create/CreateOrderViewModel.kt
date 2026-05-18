@@ -216,6 +216,60 @@ class CreateOrderViewModel(
             }
         }
     }
+
+    fun addProduct(productId: Long) {
+        val state = _uiState.value
+        val product = state.products.firstOrNull { it.id == productId }
+
+        if (product == null) {
+            _uiState.update {
+                it.copy(errorMessage = "Produto não encontrado.")
+            }
+            return
+        }
+
+        val existingItem = state.items.firstOrNull { it.productId == productId }
+
+        val updatedItems = if (existingItem != null) {
+            state.items.map { item ->
+                if (item.productId == productId) {
+                    item.copy(quantity = item.quantity + 1)
+                } else {
+                    item
+                }
+            }
+        } else {
+            state.items + product.toCreateOrderItemUiState(quantity = 1)
+        }
+
+        _uiState.update {
+            it.copy(
+                items = updatedItems,
+                errorMessage = null
+            )
+        }
+    }
+
+    fun decreaseProductQuantity(productId: Long) {
+        _uiState.update { state ->
+            val updatedItems = state.items.mapNotNull { item ->
+                if (item.productId != productId) {
+                    item
+                } else {
+                    val newQuantity = item.quantity - 1
+
+                    if (newQuantity <= 0) null
+                    else item.copy(quantity = newQuantity)
+                }
+            }
+
+            state.copy(
+                items = updatedItems,
+                errorMessage = null
+            )
+        }
+    }
+
 }
 
 private fun Product.toCreateOrderItemUiState(quantity: Int): CreateOrderItemUiState {

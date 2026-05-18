@@ -1,31 +1,57 @@
 package com.jfb.orderops.order.presentation.create
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.jfb.orderops.R
+import com.jfb.orderops.category.domain.model.Category
+import com.jfb.orderops.core.ui.components.ComandexScaffold
 import com.jfb.orderops.order.domain.model.OrderFulfillmentType
 import com.jfb.orderops.order.presentation.state.CreateOrderItemUiState
 import com.jfb.orderops.order.presentation.state.CreateOrderUiState
+import com.jfb.orderops.product.domain.model.Product
+import com.jfb.orderops.ui.theme.LocalOrderOpsExtraColors
+import java.text.NumberFormat
+import java.util.Locale
 
 @Composable
 fun CreateOrderScreen(
@@ -38,231 +64,716 @@ fun CreateOrderScreen(
     onBack: () -> Unit
 ) {
     val filteredProducts = uiState.products.filter { product ->
-        uiState.selectedCategoryId == null ||
-                product.categoryId == uiState.selectedCategoryId
+        product.active &&
+                (uiState.selectedCategoryId == null || product.categoryId == uiState.selectedCategoryId)
     }
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .padding(16.dp)
+    val totalItems = uiState.items.sumOf { it.quantity }
+    val totalAmount = uiState.items.sumOf { it.totalPrice }
+
+    ComandexScaffold {
+        Box(
+            modifier = Modifier.fillMaxSize()
         ) {
-            OutlinedButton(
-                onClick = onBack,
-                enabled = !uiState.isLoading
-            ) {
-                Text("Voltar")
-            }
-
-            Spacer(Modifier.height(16.dp))
-
-            Text(
-                text = "Novo pedido",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            Spacer(Modifier.height(24.dp))
-
-            Text(
-                text = "Tipo de atendimento",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OrderFulfillmentType.entries
-                    .filter { it != OrderFulfillmentType.UNKNOWN }
-                    .forEach { type ->
-                        FilterChip(
-                            selected = uiState.fulfillmentType == type,
-                            onClick = { onFulfillmentTypeSelected(type) },
-                            label = { Text(type.label) }
-                        )
-                    }
-            }
-
-            Spacer(Modifier.height(24.dp))
-
-            Text(
-                text = "Categorias",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                FilterChip(
-                    selected = uiState.selectedCategoryId == null,
-                    onClick = { onCategorySelected(null) },
-                    label = { Text("Todos") }
-                )
-
-                uiState.categories.forEach { category ->
-                    FilterChip(
-                        selected = uiState.selectedCategoryId == category.id,
-                        onClick = { onCategorySelected(category.id) },
-                        label = { Text(category.name) }
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(16.dp))
-
-            if (uiState.isLoading) {
-                CircularProgressIndicator()
-                Spacer(Modifier.height(12.dp))
-            }
-
-            uiState.errorMessage?.let {
-                Text(
-                    text = it,
-                    color = MaterialTheme.colorScheme.error
-                )
-
-                Spacer(Modifier.height(12.dp))
-            }
-
             LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = if (uiState.items.isNotEmpty()) 132.dp else 24.dp),
+                verticalArrangement = Arrangement.spacedBy(18.dp),
+                contentPadding = PaddingValues(top = 16.dp)
             ) {
                 item {
-                    Text(
-                        text = "Produtos",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onBackground
+                    CreateOrderHeader(
+                        uiState = uiState,
+                        onBack = onBack
                     )
                 }
 
-                items(filteredProducts) { product ->
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp)
-                        ) {
-                            Text(
-                                text = product.name,
-                                style = MaterialTheme.typography.titleMedium
-                            )
+                item {
+                    FulfillmentTypeSelector(
+                        selectedType = uiState.fulfillmentType,
+                        enabled = !uiState.isLoading,
+                        onSelected = onFulfillmentTypeSelected
+                    )
+                }
 
-                            Spacer(Modifier.height(4.dp))
+                item {
+                    CategorySelector(
+                        categories = uiState.categories,
+                        selectedCategoryId = uiState.selectedCategoryId,
+                        onCategorySelected = onCategorySelected
+                    )
+                }
 
-                            product.description?.let {
-                                Text(it)
-                            }
-
-                            Spacer(Modifier.height(8.dp))
-
-                            Text(
-                                text = "R$ ${"%.2f".format(product.price)}",
-                                style = MaterialTheme.typography.titleMedium
-                            )
-
-                            Spacer(Modifier.height(12.dp))
-
-                            Button(
-                                onClick = { onAddProduct(product.id) },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text("Adicionar")
-                            }
-                        }
+                if (uiState.isLoading) {
+                    item {
+                        LoadingContent()
                     }
                 }
 
-                if (uiState.items.isNotEmpty()) {
+                uiState.errorMessage?.let { message ->
                     item {
-                        Spacer(Modifier.height(12.dp))
-
-                        Text(
-                            text = "Itens do pedido",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
+                        ErrorMessage(message = message)
                     }
+                }
 
-                    items(uiState.items) { item ->
-                        OrderItemCard(
-                            item = item,
-                            onRemove = {
-                                onRemoveProduct(item.productId)
-                            }
-                        )
+                item {
+                    Text(
+                        text = selectedCategoryTitle(
+                            categories = uiState.categories,
+                            selectedCategoryId = uiState.selectedCategoryId
+                        ),
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                items(
+                    items = filteredProducts,
+                    key = { it.id }
+                ) { product ->
+                    val quantity = uiState.items
+                        .firstOrNull { it.productId == product.id }
+                        ?.quantity ?: 0
+
+                    ProductOrderCard(
+                        product = product,
+                        quantity = quantity,
+                        onAdd = { onAddProduct(product.id) },
+                        onDecrease = { onRemoveProduct(product.id) }
+                    )
+                }
+
+                if (!uiState.isLoading && filteredProducts.isEmpty()) {
+                    item {
+                        EmptyProductsMessage()
                     }
                 }
             }
 
             if (uiState.items.isNotEmpty()) {
-                Spacer(Modifier.height(12.dp))
-
-                Button(
-                    onClick = onCreateOrder,
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !uiState.isLoading
-                ) {
-                    Text("Criar pedido")
-                }
+                OrderSummaryBar(
+                    totalItems = totalItems,
+                    totalAmount = totalAmount,
+                    isLoading = uiState.isLoading,
+                    onCreateOrder = onCreateOrder,
+                    modifier = Modifier.align(Alignment.BottomCenter)
+                )
             }
         }
     }
 }
 
 @Composable
-private fun OrderItemCard(
-    item: CreateOrderItemUiState,
-    onRemove: () -> Unit
+private fun CreateOrderHeader(
+    uiState: CreateOrderUiState,
+    onBack: () -> Unit
 ) {
-    Card(
+    val colors = MaterialTheme.colorScheme
+    val extraColors = LocalOrderOpsExtraColors.current
+
+    Row(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface
-        )
+        verticalAlignment = Alignment.CenterVertically
     ) {
+        IconButton(
+            onClick = onBack,
+            enabled = !uiState.isLoading,
+            modifier = Modifier
+                .size(48.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(colors.surface.copy(alpha = 0.48f))
+                .border(
+                    width = 1.dp,
+                    color = colors.outline.copy(alpha = 0.18f),
+                    shape = RoundedCornerShape(16.dp)
+                )
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_chevron_right),
+                contentDescription = "Voltar",
+                tint = colors.onSurface,
+                modifier = Modifier.size(22.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.width(14.dp))
+
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.weight(1f)
         ) {
             Text(
-                text = item.productName,
-                style = MaterialTheme.typography.titleMedium
+                text = headerTitle(uiState),
+                style = MaterialTheme.typography.headlineSmall,
+                color = colors.onBackground,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
 
-            Spacer(Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(3.dp))
 
-            Text("Quantidade: ${item.quantity}")
-
-            Text(
-                text = "Subtotal: R$ ${"%.2f".format(item.totalPrice)}"
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            OutlinedButton(
-                onClick = onRemove,
-                modifier = Modifier.fillMaxWidth()
+            Row(
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Remover")
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(extraColors.success)
+                )
+
+                Spacer(modifier = Modifier.width(7.dp))
+
+                Text(
+                    text = headerSubtitle(uiState),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
         }
     }
+}
+
+@Composable
+private fun FulfillmentTypeSelector(
+    selectedType: OrderFulfillmentType,
+    enabled: Boolean,
+    onSelected: (OrderFulfillmentType) -> Unit
+) {
+    Column {
+        Text(
+            text = "Tipo de atendimento",
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onBackground,
+            fontWeight = FontWeight.SemiBold
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            OrderFulfillmentType.entries
+                .filter { it != OrderFulfillmentType.UNKNOWN }
+                .forEach { type ->
+                    FulfillmentChip(
+                        text = type.shortLabel(),
+                        iconRes = type.iconRes(),
+                        selected = selectedType == type,
+                        enabled = enabled,
+                        onClick = { onSelected(type) }
+                    )
+                }
+        }
+    }
+}
+
+@Composable
+private fun FulfillmentChip(
+    text: String,
+    iconRes: Int,
+    selected: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    val colors = MaterialTheme.colorScheme
+
+    val background = if (selected) {
+        colors.primary.copy(alpha = 0.22f)
+    } else {
+        colors.surface.copy(alpha = 0.42f)
+    }
+
+    val borderColor = if (selected) {
+        colors.primary
+    } else {
+        colors.outline.copy(alpha = 0.18f)
+    }
+
+    val contentColor = if (selected) {
+        colors.primary
+    } else {
+        colors.onSurfaceVariant
+    }
+
+    Row(
+        modifier = Modifier
+            .height(46.dp)
+            .clip(RoundedCornerShape(15.dp))
+            .background(background)
+            .border(
+                width = 1.dp,
+                color = borderColor,
+                shape = RoundedCornerShape(15.dp)
+            )
+            .clickable(enabled = enabled) { onClick() }
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Icon(
+            painter = painterResource(iconRes),
+            contentDescription = null,
+            tint = contentColor,
+            modifier = Modifier.size(18.dp)
+        )
+
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelLarge,
+            color = contentColor,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
+        )
+    }
+}
+
+@Composable
+private fun CategorySelector(
+    categories: List<Category>,
+    selectedCategoryId: Long?,
+    onCategorySelected: (Long?) -> Unit
+) {
+    Column {
+        Text(
+            text = "Categorias",
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onBackground,
+            fontWeight = FontWeight.SemiBold
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            contentPadding = PaddingValues(end = 16.dp)
+        ) {
+            item {
+                CategoryChip(
+                    text = "Todas",
+                    selected = selectedCategoryId == null,
+                    onClick = { onCategorySelected(null) }
+                )
+            }
+
+            items(
+                items = categories.filter { it.active },
+                key = { it.id }
+            ) { category ->
+                CategoryChip(
+                    text = category.name,
+                    selected = selectedCategoryId == category.id,
+                    onClick = { onCategorySelected(category.id) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CategoryChip(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    val colors = MaterialTheme.colorScheme
+
+    Row(
+        modifier = Modifier
+            .height(38.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(
+                if (selected) colors.primary.copy(alpha = 0.18f)
+                else colors.surface.copy(alpha = 0.38f)
+            )
+            .border(
+                width = 1.dp,
+                color = if (selected) colors.primary else colors.outline.copy(alpha = 0.18f),
+                shape = RoundedCornerShape(14.dp)
+            )
+            .clickable { onClick() }
+            .padding(horizontal = 15.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelMedium,
+            color = if (selected) colors.primary else colors.onSurfaceVariant,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+            maxLines = 1
+        )
+    }
+}
+
+@Composable
+private fun ProductOrderCard(
+    product: Product,
+    quantity: Int,
+    onAdd: () -> Unit,
+    onDecrease: () -> Unit
+) {
+    val colors = MaterialTheme.colorScheme
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        color = colors.surface.copy(alpha = 0.82f),
+        border = BorderStroke(
+            width = 1.dp,
+            color = colors.outline.copy(alpha = 0.14f)
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            ProductImagePlaceholder(
+                name = product.name
+            )
+
+            Spacer(modifier = Modifier.width(14.dp))
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = product.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = colors.onSurface,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(modifier = Modifier.height(5.dp))
+
+                Text(
+                    text = product.description.orEmpty().ifBlank {
+                        product.categoryName ?: "Produto do cardápio"
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Text(
+                    text = product.price.toCurrency(),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = colors.onSurface,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            QuantityControl(
+                quantity = quantity,
+                onAdd = onAdd,
+                onDecrease = onDecrease
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProductImagePlaceholder(
+    name: String
+) {
+    val colors = MaterialTheme.colorScheme
+
+    Box(
+        modifier = Modifier
+            .size(64.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(colors.surfaceVariant.copy(alpha = 0.72f)),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = name.firstOrNull()?.uppercase() ?: "?",
+            style = MaterialTheme.typography.titleLarge,
+            color = colors.primary,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@Composable
+private fun QuantityControl(
+    quantity: Int,
+    onAdd: () -> Unit,
+    onDecrease: () -> Unit
+) {
+    val colors = MaterialTheme.colorScheme
+
+    if (quantity <= 0) {
+        IconButton(
+            onClick = onAdd,
+            modifier = Modifier
+                .size(42.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(colors.primary.copy(alpha = 0.18f))
+                .border(
+                    width = 1.dp,
+                    color = colors.primary,
+                    shape = RoundedCornerShape(14.dp)
+                )
+        ) {
+            Text(
+                text = "+",
+                style = MaterialTheme.typography.headlineSmall,
+                color = colors.primary,
+                fontWeight = FontWeight.Medium
+            )
+        }
+        return
+    }
+
+    Row(
+        modifier = Modifier
+            .height(42.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(colors.background.copy(alpha = 0.24f))
+            .border(
+                width = 1.dp,
+                color = colors.outline.copy(alpha = 0.18f),
+                shape = RoundedCornerShape(14.dp)
+            )
+            .padding(horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        TextButton(
+            onClick = onDecrease,
+            contentPadding = PaddingValues(0.dp),
+            modifier = Modifier.size(34.dp)
+        ) {
+            Text(
+                text = "−",
+                style = MaterialTheme.typography.titleLarge,
+                color = colors.onSurface
+            )
+        }
+
+        Text(
+            text = quantity.toString(),
+            style = MaterialTheme.typography.titleMedium,
+            color = colors.primary,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 8.dp)
+        )
+
+        TextButton(
+            onClick = onAdd,
+            contentPadding = PaddingValues(0.dp),
+            modifier = Modifier.size(34.dp)
+        ) {
+            Text(
+                text = "+",
+                style = MaterialTheme.typography.titleLarge,
+                color = colors.onSurface
+            )
+        }
+    }
+}
+
+@Composable
+private fun OrderSummaryBar(
+    totalItems: Int,
+    totalAmount: Double,
+    isLoading: Boolean,
+    onCreateOrder: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colors = MaterialTheme.colorScheme
+
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .navigationBarsPadding(),
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        color = colors.surface.copy(alpha = 0.96f),
+        tonalElevation = 8.dp,
+        shadowElevation = 12.dp,
+        border = BorderStroke(
+            width = 1.dp,
+            color = colors.outline.copy(alpha = 0.14f)
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(18.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(colors.background.copy(alpha = 0.34f))
+                    .border(
+                        width = 1.dp,
+                        color = colors.outline.copy(alpha = 0.16f),
+                        shape = RoundedCornerShape(18.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_basket),
+                    contentDescription = null,
+                    tint = colors.primary,
+                    modifier = Modifier.size(26.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(14.dp))
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = "$totalItems ${if (totalItems == 1) "item" else "itens"}",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = colors.onSurface,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(3.dp))
+
+                Text(
+                    text = totalAmount.toCurrency(),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = colors.primary,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Button(
+                onClick = onCreateOrder,
+                enabled = !isLoading,
+                shape = RoundedCornerShape(18.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colors.primary,
+                    contentColor = colors.onPrimary,
+                    disabledContainerColor = colors.surfaceVariant,
+                    disabledContentColor = colors.onSurfaceVariant
+                ),
+                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 14.dp)
+            ) {
+                Text(
+                    text = if (isLoading) "Criando..." else "Criar pedido",
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LoadingContent() {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center
+    ) {
+        CircularProgressIndicator(
+            color = MaterialTheme.colorScheme.primary
+        )
+    }
+}
+
+@Composable
+private fun ErrorMessage(
+    message: String
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.error.copy(alpha = 0.16f),
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.error.copy(alpha = 0.32f)
+        )
+    ) {
+        Text(
+            text = message,
+            modifier = Modifier.padding(14.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+    }
+}
+
+@Composable
+private fun EmptyProductsMessage() {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.14f)
+        )
+    ) {
+        Text(
+            text = "Nenhum produto encontrado nesta categoria.",
+            modifier = Modifier.padding(18.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+private fun headerTitle(
+    uiState: CreateOrderUiState
+): String {
+    return if (uiState.fulfillmentType == OrderFulfillmentType.DINE_IN && uiState.serviceTableId != null) {
+        "Pedido da Mesa ${uiState.serviceTableId}"
+    } else {
+        "Novo pedido"
+    }
+}
+
+private fun headerSubtitle(
+    uiState: CreateOrderUiState
+): String {
+    return when (uiState.fulfillmentType) {
+        OrderFulfillmentType.DINE_IN -> "Atendimento local"
+        OrderFulfillmentType.TAKEOUT -> "Retirada no balcão"
+        OrderFulfillmentType.DELIVERY -> "Pedido para entrega"
+        OrderFulfillmentType.UNKNOWN -> "Monte a comanda"
+    }
+}
+
+private fun selectedCategoryTitle(
+    categories: List<Category>,
+    selectedCategoryId: Long?
+): String {
+    return categories.firstOrNull { it.id == selectedCategoryId }?.name ?: "Produtos"
+}
+
+private fun OrderFulfillmentType.shortLabel(): String {
+    return when (this) {
+        OrderFulfillmentType.DINE_IN -> "Local"
+        OrderFulfillmentType.TAKEOUT -> "Retirada"
+        OrderFulfillmentType.DELIVERY -> "Entrega"
+        OrderFulfillmentType.UNKNOWN -> "Outro"
+    }
+}
+
+private fun OrderFulfillmentType.iconRes(): Int {
+    return when (this) {
+        OrderFulfillmentType.DINE_IN -> R.drawable.ic_utensils_crossed
+        OrderFulfillmentType.TAKEOUT -> R.drawable.ic_basket
+        OrderFulfillmentType.DELIVERY -> R.drawable.ic_motorbike
+        OrderFulfillmentType.UNKNOWN -> R.drawable.ic_receipt
+    }
+}
+
+private fun Double.toCurrency(): String {
+    return NumberFormat
+        .getCurrencyInstance(Locale("pt", "BR"))
+        .format(this)
 }

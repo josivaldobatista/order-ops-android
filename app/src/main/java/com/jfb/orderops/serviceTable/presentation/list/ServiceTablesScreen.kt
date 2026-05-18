@@ -440,26 +440,21 @@ private fun ServiceTableCard(
                 }
 
                 ServiceTableStatus.RESERVED -> {
-
                     TableQuickActionsRow(
-                        primaryText = "Ocupar",
+                        primaryText = "Abrir",
                         secondaryText = "Liberar",
                         primaryColor = colors.primary,
                         secondaryColor = colors.onSurfaceVariant,
-                        onPrimaryClick = onOccupy,
+                        onPrimaryClick = onClick,
                         onSecondaryClick = onRelease
                     )
                 }
 
                 ServiceTableStatus.OCCUPIED -> {
-
-                    TableQuickActionsRow(
-                        primaryText = "Pedido",
-                        secondaryText = "Liberar",
-                        primaryColor = statusUi.color,
-                        secondaryColor = colors.onSurfaceVariant,
-                        onPrimaryClick = onClick,
-                        onSecondaryClick = onRelease
+                    TableSingleActionButton(
+                        text = "Ver pedido",
+                        color = statusUi.color,
+                        onClick = onClick
                     )
                 }
 
@@ -750,6 +745,39 @@ private fun ServiceTableStatus.toStatusUi(): TableStatusUi {
             label = "Desconhecida",
             color = colors.error
         )
+    }
+}
+
+@Composable
+private fun TableSingleActionButton(
+    text: String,
+    color: Color,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(14.dp),
+        color = color.copy(alpha = 0.12f),
+        border = BorderStroke(
+            width = 1.dp,
+            color = color.copy(alpha = 0.28f)
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(40.dp)
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = text,
+                color = color,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1
+            )
+        }
     }
 }
 
