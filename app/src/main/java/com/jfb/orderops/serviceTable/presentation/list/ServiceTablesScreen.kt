@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -49,6 +50,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -70,7 +72,10 @@ fun ServiceTablesScreen(
     uiState: ServiceTablesUiState,
     onRefresh: () -> Unit,
     onTableClick: (Long) -> Unit,
-    onCreateTableClick: () -> Unit
+    onCreateTableClick: () -> Unit,
+    onReserveTable: (Long) -> Unit,
+    onOccupyTable: (Long) -> Unit,
+    onReleaseTable: (Long) -> Unit
 ) {
     var selectedFilter by remember { mutableStateOf(TableFilter.ALL) }
 
@@ -100,8 +105,6 @@ fun ServiceTablesScreen(
                 .fillMaxSize()
                 .padding(horizontal = 20.dp)
         ) {
-            Spacer(modifier = Modifier.height(24.dp))
-
             TablesHeader(
                 isLoading = uiState.isLoading,
                 onRefresh = onRefresh
@@ -141,7 +144,7 @@ fun ServiceTablesScreen(
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(2),
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(bottom = 112.dp),
+                        contentPadding = PaddingValues(bottom = 140.dp),
                         horizontalArrangement = Arrangement.spacedBy(14.dp),
                         verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
@@ -151,7 +154,16 @@ fun ServiceTablesScreen(
                         ) { serviceTable ->
                             ServiceTableCard(
                                 serviceTable = serviceTable,
-                                onClick = { onTableClick(serviceTable.id) }
+                                onClick = { onTableClick(serviceTable.id) },
+                                onReserve = {
+                                    onReserveTable(serviceTable.id)
+                                },
+                                onOccupy = {
+                                    onOccupyTable(serviceTable.id)
+                                },
+                                onRelease = {
+                                    onReleaseTable(serviceTable.id)
+                                }
                             )
                         }
                     }
@@ -166,7 +178,7 @@ fun ServiceTablesScreen(
             shape = CircleShape,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(end = 24.dp, bottom = 108.dp)
+                .offset(y = (-10).dp)
         ) {
             Icon(
                 imageVector = Icons.Rounded.Add,
@@ -197,13 +209,6 @@ private fun TablesHeader(
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text(
-                text = "Gerencie mesas e comandas",
-                color = colors.onSurfaceVariant,
-                style = MaterialTheme.typography.bodyMedium
-            )
         }
 
         Surface(
@@ -354,7 +359,10 @@ private fun TableFilterChip(
 @Composable
 private fun ServiceTableCard(
     serviceTable: ServiceTable,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onReserve: () -> Unit,
+    onOccupy: () -> Unit,
+    onRelease: () -> Unit
 ) {
     val colors = MaterialTheme.colorScheme
     val statusUi = serviceTable.status.toStatusUi()
@@ -374,7 +382,7 @@ private fun ServiceTableCard(
         )
     ) {
         Column(
-            modifier = Modifier.padding(14.dp)
+            modifier = Modifier.padding(12.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -390,18 +398,18 @@ private fun ServiceTableCard(
                 TableStatusChip(statusUi = statusUi)
             }
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Text(
                 text = "Mesa ${serviceTable.number}",
                 color = colors.onSurface,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
 
-            Spacer(modifier = Modifier.height(2.dp))
+            Spacer(modifier = Modifier.height(1.dp))
 
             Text(
                 text = "${serviceTable.capacity} lugares",
@@ -409,44 +417,129 @@ private fun ServiceTableCard(
                 style = MaterialTheme.typography.bodyMedium
             )
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(10.dp))
 
             HorizontalDivider(
                 color = colors.outline.copy(alpha = 0.16f)
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = if (enabled) "Abrir" else "Indisponível",
-                    color = if (enabled) statusUi.color else colors.onSurfaceVariant.copy(alpha = 0.65f),
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold
-                )
+            when (serviceTable.status) {
 
-                Spacer(modifier = Modifier.width(4.dp))
+                ServiceTableStatus.AVAILABLE -> {
 
-                if (enabled) {
-                    Icon(
-                        imageVector = Icons.Rounded.ChevronRight,
-                        contentDescription = null,
-                        tint = statusUi.color,
-                        modifier = Modifier.size(20.dp)
-                    )
-                } else {
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    Icon(
-                        imageVector = Icons.Rounded.Lock,
-                        contentDescription = null,
-                        tint = colors.onSurfaceVariant.copy(alpha = 0.55f),
-                        modifier = Modifier.size(18.dp)
+                    TableQuickActionsRow(
+                        primaryText = "Abrir",
+                        secondaryText = "Reserva",
+                        primaryColor = statusUi.color,
+                        secondaryColor = colors.secondary,
+                        onPrimaryClick = onClick,
+                        onSecondaryClick = onReserve
                     )
                 }
+
+                ServiceTableStatus.RESERVED -> {
+
+                    TableQuickActionsRow(
+                        primaryText = "Ocupar",
+                        secondaryText = "Liberar",
+                        primaryColor = colors.primary,
+                        secondaryColor = colors.onSurfaceVariant,
+                        onPrimaryClick = onOccupy,
+                        onSecondaryClick = onRelease
+                    )
+                }
+
+                ServiceTableStatus.OCCUPIED -> {
+
+                    TableQuickActionsRow(
+                        primaryText = "Pedido",
+                        secondaryText = "Liberar",
+                        primaryColor = statusUi.color,
+                        secondaryColor = colors.onSurfaceVariant,
+                        onPrimaryClick = onClick,
+                        onSecondaryClick = onRelease
+                    )
+                }
+
+                else -> {
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Indisponível",
+                            color = colors.onSurfaceVariant.copy(alpha = 0.7f),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
+        }
+    }
+}
+
+@Composable
+private fun TableQuickActionsRow(
+    primaryText: String,
+    secondaryText: String,
+    primaryColor: Color,
+    secondaryColor: Color,
+    onPrimaryClick: () -> Unit,
+    onSecondaryClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        TableQuickActionButton(
+            text = primaryText,
+            color = primaryColor,
+            onClick = onPrimaryClick,
+            modifier = Modifier.weight(1f)
+        )
+
+        TableQuickActionButton(
+            text = secondaryText,
+            color = secondaryColor,
+            onClick = onSecondaryClick,
+            modifier = Modifier.weight(1f),
+            textStyle = MaterialTheme.typography.labelSmall
+        )
+    }
+}
+
+@Composable
+private fun TableQuickActionButton(
+    text: String,
+    color: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    textStyle: TextStyle = MaterialTheme.typography.labelMedium
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(14.dp),
+        color = color.copy(alpha = 0.12f),
+        border = BorderStroke(
+            width = 1.dp,
+            color = color.copy(alpha = 0.28f)
+        ),
+        modifier = modifier.height(40.dp)
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = text,
+                color = color,
+                style = textStyle,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1
+            )
         }
     }
 }
@@ -458,7 +551,7 @@ private fun TableIconBadge(
 ) {
     Box(
         modifier = Modifier
-            .size(42.dp)
+            .size(36.dp)
             .background(color.copy(alpha = 0.12f), CircleShape)
             .border(
                 width = 1.dp,
@@ -471,7 +564,7 @@ private fun TableIconBadge(
             painter = painterResource(iconRes),
             contentDescription = null,
             tint = color,
-            modifier = Modifier.size(23.dp)
+            modifier = Modifier.size(20.dp)
         )
     }
 }
@@ -489,7 +582,7 @@ private fun TableStatusChip(
             color = statusUi.color,
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp)
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
         )
     }
 }

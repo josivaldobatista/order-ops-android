@@ -32,7 +32,7 @@ fun DashboardHeader(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = 20.dp, bottom = 24.dp),
+            .padding(top = 20.dp, bottom = 16.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Column {

@@ -40,6 +40,9 @@ import com.jfb.orderops.product.presentation.list.ProductsViewModel
 import com.jfb.orderops.product.presentation.list.ProductsViewModelFactory
 import com.jfb.orderops.serviceTable.data.repository.ServiceTableRepositoryImpl
 import com.jfb.orderops.serviceTable.domain.usecase.ListServiceTablesUseCase
+import com.jfb.orderops.serviceTable.domain.usecase.OccupyServiceTableUseCase
+import com.jfb.orderops.serviceTable.domain.usecase.ReleaseServiceTableUseCase
+import com.jfb.orderops.serviceTable.domain.usecase.ReserveServiceTableUseCase
 import com.jfb.orderops.serviceTable.presentation.list.ServiceTablesScreen
 import com.jfb.orderops.serviceTable.presentation.list.ServiceTablesViewModel
 import com.jfb.orderops.serviceTable.presentation.list.ServiceTablesViewModelFactory
@@ -54,10 +57,25 @@ fun DashboardScreen(
 
     val serviceTableApi = RetrofitClient.createServiceTableApi(sessionStorage)
     val serviceTableRepository = ServiceTableRepositoryImpl(serviceTableApi)
-    val listServiceTablesUseCase = ListServiceTablesUseCase(serviceTableRepository)
+    val listServiceTablesUseCase =
+        ListServiceTablesUseCase(serviceTableRepository)
+
+    val reserveServiceTableUseCase =
+        ReserveServiceTableUseCase(serviceTableRepository)
+
+    val occupyServiceTableUseCase =
+        OccupyServiceTableUseCase(serviceTableRepository)
+
+    val releaseServiceTableUseCase =
+        ReleaseServiceTableUseCase(serviceTableRepository)
 
     val serviceTablesViewModel: ServiceTablesViewModel = viewModel(
-        factory = ServiceTablesViewModelFactory(listServiceTablesUseCase)
+        factory = ServiceTablesViewModelFactory(
+            listServiceTablesUseCase = listServiceTablesUseCase,
+            reserveServiceTableUseCase = reserveServiceTableUseCase,
+            occupyServiceTableUseCase = occupyServiceTableUseCase,
+            releaseServiceTableUseCase = releaseServiceTableUseCase
+        )
     )
     val serviceTablesUiState = serviceTablesViewModel.uiState.collectAsState().value
 
@@ -151,14 +169,20 @@ fun DashboardScreen(
                     DashboardSection.Tables -> ServiceTablesScreen(
                         uiState = serviceTablesUiState,
                         onRefresh = serviceTablesViewModel::loadServiceTables,
+
                         onTableClick = { tableId ->
                             navController.navigate(
                                 AppRoute.CreateOrder.createRoute(tableId)
                             )
                         },
+
                         onCreateTableClick = {
                             navController.navigate(AppRoute.CreateServiceTable.route)
-                        }
+                        },
+
+                        onReserveTable = serviceTablesViewModel::reserveTable,
+                        onOccupyTable = serviceTablesViewModel::occupyTable,
+                        onReleaseTable = serviceTablesViewModel::releaseTable
                     )
 
                     DashboardSection.Orders -> OrdersScreen(

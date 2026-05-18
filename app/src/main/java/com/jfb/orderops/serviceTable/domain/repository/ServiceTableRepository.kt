@@ -11,4 +11,12 @@ interface ServiceTableRepository {
         number: String,
         capacity: Int
     ): AppResult<ServiceTable>
+
+    suspend fun reserve(id: Long): AppResult<ServiceTable>
+
+    suspend fun occupy(id: Long): AppResult<ServiceTable>
+
+    suspend fun release(id: Long): AppResult<ServiceTable>
+
+    suspend fun deactivate(id: Long): AppResult<Unit>
 }
