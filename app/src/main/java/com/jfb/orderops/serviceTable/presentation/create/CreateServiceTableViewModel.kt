@@ -26,34 +26,63 @@ class CreateServiceTableViewModel(
     }
 
     fun create(onSuccess: () -> Unit) {
+
         val state = _uiState.value
 
+        val number = state.number.trim()
         val capacity = state.capacity.toIntOrNull()
 
-        if (capacity == null) {
-            _uiState.update {
-                it.copy(errorMessage = "Capacidade inválida.")
+        when {
+
+            number.isBlank() -> {
+                _uiState.update {
+                    it.copy(errorMessage = "Informe o número da mesa.")
+                }
+                return
             }
-            return
+
+            capacity == null -> {
+                _uiState.update {
+                    it.copy(errorMessage = "Capacidade inválida.")
+                }
+                return
+            }
+
+            capacity <= 0 -> {
+                _uiState.update {
+                    it.copy(errorMessage = "A capacidade deve ser maior que zero.")
+                }
+                return
+            }
         }
 
         viewModelScope.launch {
+
             _uiState.update {
-                it.copy(isLoading = true, errorMessage = null)
+                it.copy(
+                    isLoading = true,
+                    errorMessage = null
+                )
             }
 
             when (
                 val result = createServiceTableUseCase.execute(
-                    number = state.number,
+                    number = number,
                     capacity = capacity
                 )
             ) {
+
                 is AppResult.Success -> {
-                    _uiState.update { it.copy(isLoading = false) }
+
+                    _uiState.update {
+                        it.copy(isLoading = false)
+                    }
+
                     onSuccess()
                 }
 
                 is AppResult.Error -> {
+
                     _uiState.update {
                         it.copy(
                             isLoading = false,

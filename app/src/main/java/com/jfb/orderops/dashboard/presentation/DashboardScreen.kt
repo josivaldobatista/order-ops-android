@@ -1,11 +1,8 @@
 package com.jfb.orderops.dashboard.presentation
 
-import android.R.attr.order
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -151,28 +148,18 @@ fun DashboardScreen(
                         }
                     )
 
-                    DashboardSection.Tables -> Column(
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        Button(
-                            onClick = {
-                                navController.navigate(AppRoute.CreateServiceTable.route)
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Nova mesa")
+                    DashboardSection.Tables -> ServiceTablesScreen(
+                        uiState = serviceTablesUiState,
+                        onRefresh = serviceTablesViewModel::loadServiceTables,
+                        onTableClick = { tableId ->
+                            navController.navigate(
+                                AppRoute.CreateOrder.createRoute(tableId)
+                            )
+                        },
+                        onCreateTableClick = {
+                            navController.navigate(AppRoute.CreateServiceTable.route)
                         }
-
-                        ServiceTablesScreen(
-                            uiState = serviceTablesUiState,
-                            onRefresh = serviceTablesViewModel::loadServiceTables,
-                            onTableClick = { tableId ->
-                                navController.navigate(
-                                    AppRoute.CreateOrder.createRoute(tableId)
-                                )
-                            }
-                        )
-                    }
+                    )
 
                     DashboardSection.Orders -> OrdersScreen(
                         uiState = ordersUiState,
