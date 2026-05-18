@@ -74,8 +74,8 @@ private fun bottomBarIcon(label: String): Int {
         "Home" -> R.drawable.ic_home
         "Mesas" -> R.drawable.ic_turntable
         "Pedidos" -> R.drawable.ic_receipt
-        "Produtos" -> R.drawable.ic_basket
-        "Relatórios", "Relat." -> R.drawable.ic_receipt_text
+        "Produtos" -> R.drawable.ic_hand_platter
+        "Relatórios", "Relat.", "Vendas" -> R.drawable.ic_chart_column
         else -> R.drawable.ic_home
     }
 }

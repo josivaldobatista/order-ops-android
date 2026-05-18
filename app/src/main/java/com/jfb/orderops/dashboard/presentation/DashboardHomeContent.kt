@@ -1,5 +1,6 @@
 package com.jfb.orderops.dashboard.presentation
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -66,7 +68,7 @@ fun DashboardHomeContent(
                 title = "Produtos",
                 value = productsCount.toString(),
                 subtitle = "Cardápio",
-                iconRes = R.drawable.ic_receipt_text,
+                iconRes = R.drawable.ic_hand_platter,
                 iconColor = Color(0xFF2A9D8F),
                 arrowColor = Color(0xFF2A9D8F),
                 onClick = onOpenProducts,
@@ -74,7 +76,7 @@ fun DashboardHomeContent(
             )
 
             DashboardMetricCard(
-                title = "Relatórios",
+                title = "Vendas",
                 value = "Ver",
                 subtitle = "Desempenho",
                 iconRes = R.drawable.ic_chart_column,
@@ -89,7 +91,8 @@ fun DashboardHomeContent(
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = "Pedidos recentes",
@@ -102,7 +105,10 @@ fun DashboardHomeContent(
                 text = "Ver todos",
                 color = MaterialTheme.colorScheme.primary,
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.clickable {
+                    onOpenAllOrders()
+                }
             )
         }
 

@@ -108,6 +108,14 @@ fun DashboardScreen(
     val sections = DashboardSection.entries
     val selectedSection = sections[selectedTab]
 
+    LaunchedEffect(selectedSection) {
+        if (selectedSection == DashboardSection.Home) {
+            ordersViewModel.loadOrders()
+            serviceTablesViewModel.loadServiceTables()
+            productsViewModel.loadProducts()
+        }
+    }
+
     ComandexScaffold {
         Column(
             modifier = Modifier.fillMaxSize()
@@ -126,7 +134,9 @@ fun DashboardScreen(
                         tablesCount = serviceTablesUiState.serviceTables.size,
                         ordersCount = ordersUiState.orders.size,
                         productsCount = productsUiState.products.size,
-                        recentOrders = ordersUiState.orders.take(3),
+                        recentOrders = ordersUiState.orders
+                            .sortedByDescending { it.id }
+                            .take(3),
                         onOpenTables = { selectedTab = DashboardSection.Tables.ordinal },
                         onOpenOrders = { selectedTab = DashboardSection.Orders.ordinal },
                         onOpenProducts = { selectedTab = DashboardSection.Products.ordinal },
