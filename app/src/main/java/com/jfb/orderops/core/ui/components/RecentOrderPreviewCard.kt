@@ -32,6 +32,7 @@ fun RecentOrderPreviewCard(
     time: String,
     fulfillmentIconRes: Int,
     fulfillmentColor: Color,
+    statusColor: Color,
     onClick: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -40,7 +41,7 @@ fun RecentOrderPreviewCard(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(24.dp))
             .background(colors.surface)
             .clickable { onClick(orderId) }
             .padding(horizontal = 14.dp, vertical = 12.dp),
@@ -53,7 +54,7 @@ fun RecentOrderPreviewCard(
             Box(
                 modifier = Modifier
                     .size(46.dp)
-                    .clip(RoundedCornerShape(14.dp))
+                    .clip(RoundedCornerShape(16.dp))
                     .background(
                         fulfillmentColor.copy(alpha = 0.18f)
                     ),
@@ -85,12 +86,19 @@ fun RecentOrderPreviewCard(
             }
         }
 
-        Text(
-            text = status,
-            color = colors.primary,
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.SemiBold
-        )
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(12.dp))
+                .background(statusColor.copy(alpha = 0.16f))
+                .padding(horizontal = 10.dp, vertical = 4.dp)
+        ) {
+            Text(
+                text = status,
+                color = statusColor,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
 
         Column(
             horizontalAlignment = Alignment.End

@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -47,8 +48,14 @@ fun ComandexBottomBar(
             Column(
                 modifier = Modifier
                     .clip(RoundedCornerShape(18.dp))
+                    .background(
+                        if (selected)
+                            colors.primary.copy(alpha = 0.14f)
+                        else
+                            Color.Transparent
+                    )
                     .clickable { onItemSelected(index) }
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(

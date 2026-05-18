@@ -1,6 +1,7 @@
 package com.jfb.orderops.core.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,26 +41,29 @@ fun DashboardMetricCard(
     onClick: () -> Unit
 ) {
     val colors = MaterialTheme.colorScheme
+    val cardShape = RoundedCornerShape(28.dp)
 
     Box(
         modifier = modifier
             .height(112.dp)
-            .clip(RoundedCornerShape(18.dp))
+            .clip(cardShape)
             .background(colors.surface)
+            .border(
+                width = 1.dp,
+                color = colors.outline.copy(alpha = 0.18f),
+                shape = cardShape
+            )
             .clickable(onClick = onClick)
             .padding(horizontal = 10.dp, vertical = 8.dp)
     ) {
-
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-
                 Box(
                     modifier = Modifier
                         .size(22.dp)

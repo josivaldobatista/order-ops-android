@@ -20,6 +20,7 @@ import com.jfb.orderops.core.ui.components.DashboardMetricCard
 import com.jfb.orderops.order.domain.model.Order
 import com.jfb.orderops.order.domain.model.OrderFulfillmentType
 import com.jfb.orderops.order.domain.model.OrderStatus
+import com.jfb.orderops.ui.theme.LocalOrderOpsExtraColors
 
 @Composable
 fun DashboardHomeContent(
@@ -35,6 +36,9 @@ fun DashboardHomeContent(
     onOpenAllOrders: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colors = MaterialTheme.colorScheme
+    val extraColors = LocalOrderOpsExtraColors.current
+
     Column(modifier = modifier) {
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -43,8 +47,8 @@ fun DashboardHomeContent(
                 value = tablesCount.toString(),
                 subtitle = "Gerenciar",
                 iconRes = R.drawable.ic_turntable,
-                iconColor = Color(0xFFB94A2E),
-                arrowColor = MaterialTheme.colorScheme.primary,
+                iconColor = colors.primary,
+                arrowColor = colors.primary,
                 onClick = onOpenTables,
                 modifier = Modifier.weight(1f)
             )
@@ -54,8 +58,8 @@ fun DashboardHomeContent(
                 value = ordersCount.toString(),
                 subtitle = "Acompanhar",
                 iconRes = R.drawable.ic_receipt,
-                iconColor = Color(0xFF1D4ED8),
-                arrowColor = Color(0xFF3B82F6),
+                iconColor = extraColors.warning,
+                arrowColor = extraColors.warning,
                 onClick = onOpenOrders,
                 modifier = Modifier.weight(1f)
             )
@@ -65,23 +69,23 @@ fun DashboardHomeContent(
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             DashboardMetricCard(
-                title = "Produtos",
+                title = "Cardápio",
                 value = productsCount.toString(),
-                subtitle = "Cardápio",
+                subtitle = "Itens",
                 iconRes = R.drawable.ic_hand_platter,
-                iconColor = Color(0xFF2A9D8F),
-                arrowColor = Color(0xFF2A9D8F),
+                iconColor = extraColors.success,
+                arrowColor = extraColors.success,
                 onClick = onOpenProducts,
                 modifier = Modifier.weight(1f)
             )
 
             DashboardMetricCard(
-                title = "Vendas",
+                title = "Relatórios",
                 value = "Ver",
                 subtitle = "Desempenho",
                 iconRes = R.drawable.ic_chart_column,
-                iconColor = Color(0xFF6D3BBF),
-                arrowColor = Color(0xFF9B5DE5),
+                iconColor = colors.secondary,
+                arrowColor = colors.secondary,
                 onClick = onOpenReports,
                 modifier = Modifier.weight(1f)
             )
@@ -96,14 +100,14 @@ fun DashboardHomeContent(
         ) {
             Text(
                 text = "Pedidos recentes",
-                color = MaterialTheme.colorScheme.onBackground,
+                color = colors.onBackground,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
 
             Text(
                 text = "Ver todos",
-                color = MaterialTheme.colorScheme.primary,
+                color = colors.primary,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.clickable {
@@ -117,7 +121,7 @@ fun DashboardHomeContent(
         if (recentOrders.isEmpty()) {
             Text(
                 text = "Nenhum pedido recente.",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = colors.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium
             )
         } else {
@@ -131,6 +135,7 @@ fun DashboardHomeContent(
                     time = "",
                     fulfillmentIconRes = order.fulfillmentIcon(),
                     fulfillmentColor = order.fulfillmentColor(),
+                    statusColor = order.status.statusColor(),
                     onClick = onOrderClick
                 )
 
@@ -177,11 +182,30 @@ private fun Order.fulfillmentIcon(): Int {
     }
 }
 
+@Composable
 private fun Order.fulfillmentColor(): Color {
+    val colors = MaterialTheme.colorScheme
+    val extraColors = LocalOrderOpsExtraColors.current
+
     return when (fulfillmentType) {
-        OrderFulfillmentType.DINE_IN -> Color(0xFF2563EB)
-        OrderFulfillmentType.TAKEOUT -> Color(0xFFE76F51)
-        OrderFulfillmentType.DELIVERY -> Color(0xFF2A9D8F)
-        OrderFulfillmentType.UNKNOWN -> Color.Gray
+        OrderFulfillmentType.DINE_IN -> colors.primary
+        OrderFulfillmentType.TAKEOUT -> extraColors.warning
+        OrderFulfillmentType.DELIVERY -> extraColors.success
+        OrderFulfillmentType.UNKNOWN -> colors.onSurfaceVariant
+    }
+}
+
+@Composable
+private fun OrderStatus.statusColor(): Color {
+    val colors = MaterialTheme.colorScheme
+    val extraColors = LocalOrderOpsExtraColors.current
+
+    return when (this) {
+        OrderStatus.OPEN -> extraColors.warning
+        OrderStatus.IN_PREPARATION -> extraColors.warning
+        OrderStatus.READY -> extraColors.success
+        OrderStatus.FINISHED -> colors.onSurfaceVariant
+        OrderStatus.CANCELLED -> colors.error
+        OrderStatus.UNKNOWN -> colors.onSurfaceVariant
     }
 }
