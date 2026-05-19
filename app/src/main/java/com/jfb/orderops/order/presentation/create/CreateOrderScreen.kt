@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.Button
@@ -28,7 +27,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
@@ -54,11 +52,11 @@ import androidx.compose.ui.unit.dp
 import com.jfb.orderops.R
 import com.jfb.orderops.category.domain.model.Category
 import com.jfb.orderops.core.ui.components.ComandexScaffold
+import com.jfb.orderops.core.ui.components.ComandexScreenHeader
 import com.jfb.orderops.order.domain.model.OrderFulfillmentType
 import com.jfb.orderops.order.presentation.state.CreateOrderItemUiState
 import com.jfb.orderops.order.presentation.state.CreateOrderUiState
 import com.jfb.orderops.product.domain.model.Product
-import com.jfb.orderops.ui.theme.LocalOrderOpsExtraColors
 import com.jfb.orderops.ui.theme.OrderOpsTheme
 import java.text.NumberFormat
 import java.util.Locale
@@ -189,9 +187,11 @@ private fun CreateOrderContent(
         contentPadding = PaddingValues(top = 12.dp)
     ) {
         item {
-            CreateOrderHeader(
-                uiState = uiState,
-                onBack = onBack
+            ComandexScreenHeader(
+                title = headerTitle(uiState),
+                subtitle = headerSubtitle(uiState),
+                onBack = onBack,
+                enabled = !uiState.isLoading
             )
         }
 
@@ -279,75 +279,6 @@ private fun CreateOrderContent(
         if (!uiState.isLoading && filteredProducts.isEmpty() && uiState.selectedCategoryId != null) {
             item {
                 EmptyProductsMessage()
-            }
-        }
-    }
-}
-
-@Composable
-private fun CreateOrderHeader(
-    uiState: CreateOrderUiState,
-    onBack: () -> Unit
-) {
-    val colors = MaterialTheme.colorScheme
-    val extraColors = LocalOrderOpsExtraColors.current
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(
-            onClick = onBack,
-            enabled = !uiState.isLoading,
-            modifier = Modifier
-                .size(42.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(colors.surface.copy(alpha = 0.48f))
-                .border(
-                    width = 1.dp,
-                    color = colors.outline.copy(alpha = 0.18f),
-                    shape = RoundedCornerShape(14.dp)
-                )
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_chevron_right),
-                contentDescription = "Voltar",
-                tint = colors.onSurface,
-                modifier = Modifier.size(22.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.width(14.dp))
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = headerTitle(uiState),
-                style = MaterialTheme.typography.titleMedium,
-                color = colors.onBackground,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            Spacer(modifier = Modifier.height(3.dp))
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .clip(CircleShape)
-                        .background(extraColors.success)
-                )
-
-                Spacer(modifier = Modifier.width(7.dp))
-
-                Text(
-                    text = headerSubtitle(uiState),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colors.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
             }
         }
     }

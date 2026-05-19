@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,6 +17,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -75,6 +77,7 @@ fun OrderDetailScreen(
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
         }
@@ -84,29 +87,21 @@ fun OrderDetailScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
+                .padding(top = 9.dp)
                 .padding(paddingValues)
-                .padding(16.dp)
+                .padding(horizontal = 16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-
-            Button(
-                onClick = onBack,
-                enabled = !uiState.isLoading
-            ) {
-                Text("Voltar")
-            }
-
-            Spacer(Modifier.height(16.dp))
-
-            if (uiState.isLoading) {
+            if (uiState.isLoading && uiState.order == null) {
                 CircularProgressIndicator()
                 Spacer(Modifier.height(16.dp))
             }
 
             uiState.errorMessage?.let {
-                Button(
+                OutlinedButton(
                     onClick = onRefresh,
-                    enabled = !uiState.isLoading
+                    enabled = !uiState.isLoading,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Tentar novamente")
                 }
@@ -119,6 +114,7 @@ fun OrderDetailScreen(
                     order = order,
                     products = uiState.products,
                     isLoading = uiState.isLoading,
+                    onBack = onBack,
                     onSendToPreparation = onSendToPreparation,
                     onMarkAsReady = onMarkAsReady,
                     onGoToPayment = onGoToPayment,
@@ -131,6 +127,8 @@ fun OrderDetailScreen(
                     onAssignItemParticipant = onAssignItemParticipant
                 )
             }
+
+            Spacer(Modifier.height(32.dp))
         }
     }
 }
@@ -140,6 +138,7 @@ private fun OrderDetailContent(
     order: Order,
     products: List<Product>,
     isLoading: Boolean,
+    onBack: () -> Unit,
     onSendToPreparation: () -> Unit,
     onMarkAsReady: () -> Unit,
     onGoToPayment: (Long, Double) -> Unit,
@@ -151,10 +150,17 @@ private fun OrderDetailContent(
     onCreateParticipant: () -> Unit,
     onAssignItemParticipant: (Long, Long?) -> Unit
 ) {
-    OrderInfoSection(order = order)
-    var showConsumptionSheet by remember { mutableStateOf(false) }
+    var showConsumptionSheet by remember {
+        mutableStateOf(false)
+    }
 
-    Spacer(Modifier.height(16.dp))
+    OrderInfoSection(
+        order = order,
+        isLoading = isLoading,
+        onBack = onBack
+    )
+
+    Spacer(Modifier.height(20.dp))
 
     OrderStatusActionsSection(
         status = order.status,
@@ -167,7 +173,17 @@ private fun OrderDetailContent(
         onCancel = onCancel
     )
 
-    Spacer(Modifier.height(24.dp))
+    Spacer(Modifier.height(28.dp))
+
+    OrderItemsSection(
+        order = order,
+        participants = uiState.participants,
+        isLoading = isLoading,
+        onRemoveItem = onRemoveItem,
+        onAssignItemParticipant = onAssignItemParticipant
+    )
+
+    Spacer(Modifier.height(28.dp))
 
     OrderParticipantsSection(
         participants = uiState.participants,
@@ -178,27 +194,16 @@ private fun OrderDetailContent(
     )
 
     if (order.status.canEditItems()) {
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(28.dp))
 
         AddItemSection(
             products = products,
             isLoading = isLoading,
             onAddItem = onAddItem
         )
-
     }
 
-    Spacer(Modifier.height(24.dp))
-
-    OrderItemsSection(
-        order = order,
-        participants = uiState.participants,
-        isLoading = isLoading,
-        onRemoveItem = onRemoveItem,
-        onAssignItemParticipant = onAssignItemParticipant
-    )
-
-    Spacer(Modifier.height(16.dp))
+    Spacer(Modifier.height(28.dp))
 
     val unassignedCount = uiState.consumptionPreview
         ?.unassignedItems
@@ -211,21 +216,15 @@ private fun OrderDetailContent(
         ?: 0
 
     val consumptionButtonText = when {
-        unassignedCount > 0 -> {
-            "Ver consumo • $unassignedCount sem participante"
-        }
-
-        participantCount > 0 -> {
-            "Ver consumo • $participantCount participante(s)"
-        }
-
-        else -> {
-            "Ver consumo por participante"
-        }
+        unassignedCount > 0 -> "Ver consumo • $unassignedCount sem participante"
+        participantCount > 0 -> "Ver consumo • $participantCount participante(s)"
+        else -> "Ver consumo por participante"
     }
 
     OutlinedButton(
-        onClick = { showConsumptionSheet = true },
+        onClick = {
+            showConsumptionSheet = true
+        },
         enabled = uiState.consumptionPreview != null,
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -243,8 +242,7 @@ private fun OrderDetailContent(
         }
     }
 
-    Spacer(Modifier.height(24.dp))
-
+    Spacer(Modifier.height(32.dp))
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -288,6 +286,9 @@ private fun AddItemSection(
             readOnly = true,
             enabled = !isLoading,
             label = { Text("Produto") },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
             modifier = Modifier
                 .menuAnchor()
                 .fillMaxWidth()

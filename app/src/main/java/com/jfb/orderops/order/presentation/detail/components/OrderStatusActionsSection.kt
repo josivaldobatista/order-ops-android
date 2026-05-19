@@ -1,12 +1,9 @@
 package com.jfb.orderops.order.presentation.detail.components
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -21,14 +18,11 @@ fun OrderStatusActionsSection(
     onFinish: () -> Unit,
     onCancel: () -> Unit
 ) {
-
     when (status) {
-
         OrderStatus.OPEN -> {
-
             ActionButtonsRow(
-                primaryText = "Preparo",
-                secondaryText = "Cancelar",
+                primaryText = "Enviar para preparo",
+                secondaryText = "Cancelar pedido",
                 isLoading = isLoading,
                 onPrimaryClick = onSendToPreparation,
                 onSecondaryClick = onCancel
@@ -36,10 +30,9 @@ fun OrderStatusActionsSection(
         }
 
         OrderStatus.IN_PREPARATION -> {
-
             ActionButtonsRow(
-                primaryText = "Pronto",
-                secondaryText = "Cancelar",
+                primaryText = "Marcar como pronto",
+                secondaryText = "Cancelar pedido",
                 isLoading = isLoading,
                 onPrimaryClick = onMarkAsReady,
                 onSecondaryClick = onCancel
@@ -47,39 +40,18 @@ fun OrderStatusActionsSection(
         }
 
         OrderStatus.READY -> {
-
             ActionButtonsRow(
-                primaryText = "Pagamento",
-                secondaryText = "Cancelar",
+                primaryText = "Ir para pagamento",
+                secondaryText = "Cancelar pedido",
                 isLoading = isLoading,
                 onPrimaryClick = onFinish,
                 onSecondaryClick = onCancel
             )
         }
 
-        OrderStatus.FINISHED -> {
-
-            Text(
-                text = "Pedido finalizado.",
-                color = MaterialTheme.colorScheme.onBackground
-            )
-        }
-
-        OrderStatus.CANCELLED -> {
-
-            Text(
-                text = "Pedido cancelado.",
-                color = MaterialTheme.colorScheme.onBackground
-            )
-        }
-
-        OrderStatus.UNKNOWN -> {
-
-            Text(
-                text = "Status desconhecido.",
-                color = MaterialTheme.colorScheme.onBackground
-            )
-        }
+        OrderStatus.FINISHED -> FinalStatusMessage("Pedido finalizado.")
+        OrderStatus.CANCELLED -> FinalStatusMessage("Pedido cancelado.")
+        OrderStatus.UNKNOWN -> FinalStatusMessage("Status desconhecido.")
     }
 }
 
@@ -91,26 +63,72 @@ private fun ActionButtonsRow(
     onPrimaryClick: () -> Unit,
     onSecondaryClick: () -> Unit
 ) {
+    Column {
+        Text(
+            text = "Ações do pedido",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onBackground
+        )
 
-    Row(
+        Spacer(Modifier.height(12.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Button(
+                onClick = onPrimaryClick,
+                enabled = !isLoading,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(60.dp),
+                shape = RoundedCornerShape(18.dp)
+            ) {
+                Text(
+                    text = primaryText,
+                    maxLines = 1
+                )
+            }
+
+            OutlinedButton(
+                onClick = onSecondaryClick,
+                enabled = !isLoading,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(56.dp),
+                shape = RoundedCornerShape(18.dp),
+                border = BorderStroke(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.45f)
+                )
+            ) {
+                Text(
+                    text = secondaryText,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FinalStatusMessage(
+    text: String
+) {
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)
+        )
     ) {
-
-        Button(
-            onClick = onPrimaryClick,
-            enabled = !isLoading,
-            modifier = Modifier.weight(1f)
-        ) {
-            Text(primaryText)
-        }
-
-        OutlinedButton(
-            onClick = onSecondaryClick,
-            enabled = !isLoading,
-            modifier = Modifier.weight(1f)
-        ) {
-            Text(secondaryText)
-        }
+        Text(
+            text = text,
+            modifier = Modifier.padding(16.dp),
+            color = MaterialTheme.colorScheme.onSurface,
+            style = MaterialTheme.typography.bodyMedium
+        )
     }
 }
