@@ -156,11 +156,12 @@ private fun OrderDetailContent(
 
     OrderInfoSection(
         order = order,
+        participantCount = uiState.participants.size,
         isLoading = isLoading,
         onBack = onBack
     )
 
-    Spacer(Modifier.height(20.dp))
+    Spacer(Modifier.height(12.dp))
 
     OrderStatusActionsSection(
         status = order.status,
@@ -173,7 +174,7 @@ private fun OrderDetailContent(
         onCancel = onCancel
     )
 
-    Spacer(Modifier.height(28.dp))
+    Spacer(Modifier.height(12.dp))
 
     OrderItemsSection(
         order = order,
