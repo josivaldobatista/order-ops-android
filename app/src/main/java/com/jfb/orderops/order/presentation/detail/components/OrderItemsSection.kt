@@ -7,16 +7,19 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
+import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.jfb.orderops.order.domain.model.Order
 import com.jfb.orderops.order.domain.model.OrderParticipant
 import com.jfb.orderops.order.domain.model.OrderStatus
+import java.text.NumberFormat
 import java.util.Locale
 
 @Composable
@@ -27,16 +30,60 @@ fun OrderItemsSection(
     onRemoveItem: (Long) -> Unit,
     onAssignItemParticipant: (Long, Long?) -> Unit
 ) {
-
     Column {
+        var selectedParticipantFilter by remember {
+            mutableStateOf<Long?>(Long.MIN_VALUE)
+        }
 
-        Text(
-            text = "Itens do pedido (${order.items.size})",
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onBackground
-        )
+        val filteredItems = when (selectedParticipantFilter) {
+            Long.MIN_VALUE -> order.items
 
-        Spacer(Modifier.height(14.dp))
+            null -> order.items.filter {
+                it.participantId == null
+            }
+
+            else -> {
+                val selectedParticipantName = participants
+                    .firstOrNull { it.id == selectedParticipantFilter }
+                    ?.name
+                    ?.trim()
+                    ?.lowercase()
+
+                order.items.filter { item ->
+                    val itemParticipantName = item.participantName
+                        ?.trim()
+                        ?.lowercase()
+
+                    item.participantId == selectedParticipantFilter ||
+                            itemParticipantName == selectedParticipantName
+                }
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Itens do pedido (${filteredItems.size})",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f)
+            )
+
+            if (order.status.canEditItems()) {
+                AttributionButton(
+                    participants = participants,
+                    selectedParticipantId = selectedParticipantFilter,
+                    onSelected = {
+                        selectedParticipantFilter = it
+                    }
+                )
+            }
+        }
+
+        Spacer(Modifier.height(10.dp))
 
         if (order.items.isEmpty()) {
             EmptyItemsCard()
@@ -44,145 +91,35 @@ fun OrderItemsSection(
         }
 
         Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-
-            order.items.forEach { item ->
-
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(24.dp),
-                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.78f),
-                    border = BorderStroke(
-                        width = 1.dp,
-                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.20f)
-                    )
-                ) {
-
-                    Column(
-                        modifier = Modifier.padding(
-                            horizontal = 14.dp,
-                            vertical = 12.dp
-                        )
-                    ) {
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.Top
-                        ) {
-
-                            ProductImagePlaceholder()
-
-                            Spacer(Modifier.width(14.dp))
-
-                            Column(
-                                modifier = Modifier.weight(1f)
-                            ) {
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.Top
-                                ) {
-
-                                    Column(
-                                        modifier = Modifier.weight(1f)
-                                    ) {
-
-                                        Text(
-                                            text = item.productName,
-                                            style = MaterialTheme.typography.titleMedium,
-                                            color = MaterialTheme.colorScheme.onSurface,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-
-                                        Spacer(Modifier.height(4.dp))
-
-                                        Text(
-                                            text = "Qtd ${item.quantity} • ${item.unitPrice.toCurrency()} cada",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.66f),
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                    }
-
-                                    Spacer(Modifier.width(12.dp))
-
-                                    Text(
-                                        text = item.totalPrice.toCurrency(),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                }
-
-                                Spacer(Modifier.height(8.dp))
-
-                                ParticipantSelectorChip(
-                                    selectedParticipantId = item.participantId,
-                                    selectedParticipantName = item.participantName,
-                                    participants = participants,
-                                    isLoading = isLoading,
-                                    onSelected = { participantId ->
-                                        onAssignItemParticipant(item.id, participantId)
-                                    }
-                                )
-
-                                if (order.status.canEditItems()) {
-
-                                    Spacer(Modifier.height(2.dp))
-
-                                    TextButton(
-                                        onClick = {
-                                            onRemoveItem(item.id)
-                                        },
-                                        enabled = !isLoading,
-                                        contentPadding = PaddingValues(0.dp)
-                                    ) {
-
-                                        Text(
-                                            text = "Remover",
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                    }
-                                }
-                            }
-                        }
+            filteredItems.forEach { item ->
+                OrderItemCompactCard(
+                    productName = item.productName,
+                    quantity = item.quantity,
+                    unitPrice = item.unitPrice,
+                    totalPrice = item.totalPrice,
+                    selectedParticipantId = item.participantId,
+                    selectedParticipantName = item.participantName,
+                    participants = participants,
+                    canEdit = order.status.canEditItems(),
+                    isLoading = isLoading,
+                    onAssignParticipant = { participantId ->
+                        onAssignItemParticipant(item.id, participantId)
+                    },
+                    onRemove = {
+                        onRemoveItem(item.id)
                     }
-                }
+                )
             }
         }
     }
 }
 
 @Composable
-private fun ProductImagePlaceholder() {
-
-    Surface(
-        modifier = Modifier.size(58.dp),
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
-    ) {
-
-        Box(
-            contentAlignment = Alignment.Center
-        ) {
-
-            Text(
-                text = "🍔",
-                style = MaterialTheme.typography.headlineSmall
-            )
-        }
-    }
-}
-
-@Composable
-private fun ParticipantSelectorChip(
-    selectedParticipantId: Long?,
-    selectedParticipantName: String?,
+private fun AttributionButton(
     participants: List<OrderParticipant>,
-    isLoading: Boolean,
+    selectedParticipantId: Long?,
     onSelected: (Long?) -> Unit
 ) {
 
@@ -190,50 +127,60 @@ private fun ParticipantSelectorChip(
         mutableStateOf(false)
     }
 
-    val participantName = selectedParticipantName ?: "Não atribuído"
+    val selectedText = when (selectedParticipantId) {
+
+        Long.MIN_VALUE -> "Todos"
+
+        null -> "Não atribuídos"
+
+        else -> {
+            participants.firstOrNull {
+                it.id == selectedParticipantId
+            }?.name ?: "Participante"
+        }
+    }
 
     Surface(
-        shape = RoundedCornerShape(999.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f),
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.42f),
         border = BorderStroke(
             width = 1.dp,
-            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.16f)
+            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.14f)
         ),
-        modifier = Modifier.clickable(
-            enabled = !isLoading
-        ) {
+        modifier = Modifier.clickable {
             expanded = true
         }
     ) {
 
         Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            modifier = Modifier.padding(
+                horizontal = 10.dp,
+                vertical = 7.dp
+            ),
             verticalAlignment = Alignment.CenterVertically
         ) {
 
             Text(
                 text = "👤",
-                style = MaterialTheme.typography.bodyMedium
-            )
-
-            Spacer(Modifier.width(8.dp))
-
-            Text(
-                text = participantName,
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (selectedParticipantId != null) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.72f)
-                }
+                style = MaterialTheme.typography.labelMedium
             )
 
             Spacer(Modifier.width(6.dp))
 
+            Text(
+                text = selectedText,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Spacer(Modifier.width(4.dp))
+
             Icon(
                 imageVector = Icons.Outlined.KeyboardArrowDown,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                modifier = Modifier.size(16.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             DropdownMenu(
@@ -245,7 +192,17 @@ private fun ParticipantSelectorChip(
 
                 DropdownMenuItem(
                     text = {
-                        Text("Não atribuído")
+                        Text("Todos")
+                    },
+                    onClick = {
+                        expanded = false
+                        onSelected(Long.MIN_VALUE)
+                    }
+                )
+
+                DropdownMenuItem(
+                    text = {
+                        Text("Não atribuídos")
                     },
                     onClick = {
                         expanded = false
@@ -271,28 +228,246 @@ private fun ParticipantSelectorChip(
 }
 
 @Composable
-private fun EmptyItemsCard() {
+private fun OrderItemCompactCard(
+    productName: String,
+    quantity: Int,
+    unitPrice: Double,
+    totalPrice: Double,
+    selectedParticipantId: Long?,
+    selectedParticipantName: String?,
+    participants: List<OrderParticipant>,
+    canEdit: Boolean,
+    isLoading: Boolean,
+    onAssignParticipant: (Long?) -> Unit,
+    onRemove: () -> Unit
+) {
+    var menuExpanded by remember { mutableStateOf(false) }
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.82f),
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f)
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 9.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            ProductImagePlaceholder(productName)
+
+            Spacer(Modifier.width(10.dp))
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Text(
+                        text = productName,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    Spacer(Modifier.width(8.dp))
+
+                    Text(
+                        text = totalPrice.toCurrency(),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.SemiBold
+                    )
+
+                    if (canEdit) {
+                        Spacer(Modifier.width(4.dp))
+
+                        Box {
+                            IconButton(
+                                onClick = { menuExpanded = true },
+                                enabled = !isLoading,
+                                modifier = Modifier.size(26.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.MoreVert,
+                                    contentDescription = "Ações do item",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+
+                            DropdownMenu(
+                                expanded = menuExpanded,
+                                onDismissRequest = { menuExpanded = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Remover item") },
+                                    onClick = {
+                                        menuExpanded = false
+                                        onRemove()
+                                    },
+                                    enabled = !isLoading
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(3.dp))
+
+                Text(
+                    text = "Qtd $quantity • ${unitPrice.toCurrency()} cada",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(Modifier.height(6.dp))
+
+                ParticipantSelectorChip(
+                    selectedParticipantId = selectedParticipantId,
+                    selectedParticipantName = selectedParticipantName,
+                    participants = participants,
+                    isLoading = isLoading,
+                    onSelected = onAssignParticipant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProductImagePlaceholder(name: String) {
+    Box(
+        modifier = Modifier
+            .size(44.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f)),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = name.firstOrNull()?.uppercase() ?: "?",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}
+
+@Composable
+private fun ParticipantSelectorChip(
+    selectedParticipantId: Long?,
+    selectedParticipantName: String?,
+    participants: List<OrderParticipant>,
+    isLoading: Boolean,
+    onSelected: (Long?) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    val participantName = selectedParticipantName ?: "Não atribuído"
+
+    Surface(
+        shape = RoundedCornerShape(999.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.10f)
+        ),
+        modifier = Modifier.clickable(enabled = !isLoading) {
+            expanded = true
+        }
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "👤",
+                style = MaterialTheme.typography.labelSmall
+            )
+
+            Spacer(Modifier.width(5.dp))
+
+            Text(
+                text = participantName,
+                style = MaterialTheme.typography.labelSmall,
+                color = if (selectedParticipantId != null) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+                fontWeight = FontWeight.Medium,
+                maxLines = 1
+            )
+
+            Spacer(Modifier.width(2.dp))
+
+            Icon(
+                imageVector = Icons.Outlined.KeyboardArrowDown,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(14.dp)
+            )
+
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Não atribuído") },
+                    onClick = {
+                        expanded = false
+                        onSelected(null)
+                    },
+                    enabled = !isLoading
+                )
+
+                participants.forEach { participant ->
+                    DropdownMenuItem(
+                        text = { Text(participant.name) },
+                        onClick = {
+                            expanded = false
+                            onSelected(participant.id)
+                        },
+                        enabled = !isLoading
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyItemsCard() {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
         border = BorderStroke(
             width = 1.dp,
-            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.20f)
+            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.14f)
         )
     ) {
-
         Text(
             text = "Nenhum item no pedido.",
-            modifier = Modifier.padding(18.dp),
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.72f)
+            modifier = Modifier.padding(16.dp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
 
 private fun Double.toCurrency(): String {
-    return "R$ ${String.format(Locale("pt", "BR"), "%.2f", this)}"
+    return NumberFormat
+        .getCurrencyInstance(Locale("pt", "BR"))
+        .format(this)
 }
 
 private fun OrderStatus.canEditItems(): Boolean {
